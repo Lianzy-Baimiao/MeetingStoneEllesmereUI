@@ -1,0 +1,16 @@
+## Interface: 120000, 120001, 120005, 120007, 120100
+## Title: |cff0cd29fEllesmereUI|r Skin: MeetingStone_Happy
+## Title-zhCN: |cff0cd29fEllesmereUI|r 皮肤: 集合石开心快乐版
+## Notes: Paints MeetingStone_Happy in the EllesmereUI house style.
+## Notes-zhCN: 让集合石开心快乐版 (MeetingStone_Happy) 使用 EllesmereUI 风格。
+## Author: 白描
+## Version: 1.2.2
+## OptionalDeps: EllesmereUI, EllesmereUIBlizzardSkin, MeetingStone, MeetingStoneEX
+## SavedVariables: MeetingStoneEllesmereUIDB
+## IconTexture: Interface\AddOns\EllesmereUI\media\eg-logo.tga
+
+Core.lua
+Config.lua
+Widgets.lua
+Panels.lua
+Options.lua

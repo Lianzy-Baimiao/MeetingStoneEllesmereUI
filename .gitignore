@@ -1,0 +1,9 @@
+# WoW 客户端产物 / 本地打包
+*.zip
+*.rar
+*.7z
+.release/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
