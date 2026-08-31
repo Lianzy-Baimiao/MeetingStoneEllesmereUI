@@ -1,10 +1,22 @@
 # MeetingStoneEllesmereUI
 
+<img src="docs/images/icon.png" alt="MeetingStoneEllesmereUI 图标" width="96" align="right">
+
 让**集合石**（MeetingStone / MeetingStone_Happy 开心快乐版）使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的皮肤插件。
 
 - **Interface**：120000 / 120001 / 120005 / 120007 / 120100
 - **作者**：白描
 - **版本**：1.2.2
+
+## 预览
+
+**活动列表**（斑马纹、选中竖条、统一字体、去色后的行贴图）
+
+![集合石查找活动界面](docs/images/browse.png)
+
+**「界面美化」设置页**（注册进集合石窗口的第 5 个标签页，本身也由同一套皮肤渲染）
+
+![界面美化设置页](docs/images/options.png)
 
 ## 特性
 
