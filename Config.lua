@@ -13,8 +13,7 @@
 local ADDON, ns = ...
 
 -------------------------------------------------------------------------------
---  Defaults. These are exactly the values the 1.0 release shipped hardcoded, so
---  a fresh install looks identical to what it replaced.
+--  Defaults. Missing saved keys inherit these without rewriting the database.
 -------------------------------------------------------------------------------
 local DEFAULTS = {
     -- Window / popup backdrop. Ours as of 1.1: EllesmereUI's S.Shell owns its own
@@ -25,6 +24,9 @@ local DEFAULTS = {
     bgAlpha      = 0.92,
     topBar       = true,          -- 25px darker band behind the title row
     topBarShade  = 0.10,          -- contrast vs bgColor (0 = same, 1 = white)
+
+    -- Local self-drawn accents only; never changes the global EUI theme.
+    useClassColor = false,
 
     -- Fonts.
     --
@@ -54,8 +56,8 @@ local DEFAULTS = {
     noAutoFilterPopup = false,
 
     -- Mirror MeetingStoneEX's 缺职责/已有职责 filters onto the main bottom bar.
-    -- Proxies only -- they click the real checkboxes. Off means they are never
-    -- built; turning it off after the fact is reload-bound.
+    -- Proxies only -- they click real controls and follow activity applicability.
+    -- This can be toggled live without resetting the underlying filters.
     roleFilterBar = true,
 
     -- 成员 column icon scaling. OFF by default and deliberately so: the column is a
@@ -104,6 +106,34 @@ function ns.GetColor(key)
     return c[1] or 0, c[2] or 0, c[3] or 0
 end
 
+-- Selection colour only: borders use their own permanent dark palette.
+-- Never read EUI's live accent: its named "green" may follow a custom theme.
+-- Legacy useThemeColor is intentionally ignored, not migrated to class colour.
+function ns.GetAccentColor()
+    if ns.Get("useClassColor") then
+        local token
+        if UnitClass then
+            local _, class = UnitClass("player")
+            token = class
+        end
+        if token then
+            local color = C_ClassColor and C_ClassColor.GetClassColor
+                and C_ClassColor.GetClassColor(token)
+            color = color or (RAID_CLASS_COLORS and RAID_CLASS_COLORS[token])
+            if color and color.r and color.g and color.b then
+                return color.r, color.g, color.b
+            end
+        end
+    end
+    -- Fixed EUI logo green (#0CD29D), also safe when class data is unavailable.
+    return 12 / 255, 210 / 255, 157 / 255
+end
+
+function ns.RefreshAccentStyle()
+    ns.Safe(ns.RefreshAccents)
+    ns.Safe(ns.RefreshSwitches)
+end
+
 function ns.IsDefault(key)
     local db = MeetingStoneEllesmereUIDB
     return not (db and db[key] ~= nil)
@@ -115,6 +145,7 @@ end
 --  a new key that nobody remembered to wire still takes effect.
 -------------------------------------------------------------------------------
 local REFRESH = {
+    useClassColor = "RefreshAccentStyle",
     bgColor      = "RefreshAll",     -- tints the header strip as well
     bgAlpha      = "RefreshAll",     -- the one global opacity: headers follow it
     topBar       = "ApplySurfaces",
@@ -127,7 +158,7 @@ local REFRESH = {
 
     headerShade     = "ApplyHeaders",
     memberIconScale = "ApplyMemberIcons",
-    roleFilterBar   = "RefreshAll",
+    roleFilterBar   = "ApplyRoleBar",
     -- Hooking is one-shot; turning it off again is reload-bound.
     noAutoFilterPopup = "RefreshAll",
 
@@ -143,6 +174,7 @@ local REFRESH = {
 }
 
 function ns.RefreshAll()
+    ns.RefreshAccentStyle()
     ns.Safe(ns.ApplySurfaces)
     ns.Safe(ns.ApplyFonts)
     ns.Safe(ns.ApplyListFont)
@@ -152,6 +184,9 @@ function ns.RefreshAll()
     ns.Safe(ns.ApplyTabs)
     ns.Safe(ns.ApplyHeaders)
     ns.Safe(ns.ApplyMemberIcons)
+    ns.Safe(ns.ApplyRoleBar)
+    ns.Safe(ns.ApplyBrowseInputs)
+    ns.Safe(ns.ApplyTablePanels)
 end
 
 function ns.Set(key, value)
@@ -162,6 +197,8 @@ function ns.Set(key, value)
     else
         ns.RefreshAll()
     end
+    if key == "labelFontSize" or key == "fontDelta" then ns.Safe(ns.ApplyBrowseInputs) end
+    if key == "labelFontSize" or key == "fontDelta" then ns.Safe(ns.ApplyTablePanels) end
     if ns.OnSettingChanged then ns.Safe(ns.OnSettingChanged, key) end
 end
 

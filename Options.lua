@@ -1,124 +1,38 @@
---[[----------------------------------------------------------------------------
-    MeetingStoneEllesmereUI -- Options.lua
-
-    The settings page, registered as a tab inside MeetingStone's own window via
-    MainPanel:RegisterPanel (the same door MeetingStoneEX uses for its 屏蔽玩家列表
-    tab; RegisterPanel calls UpdateTab itself, so registering after login works).
-
-    Built out of NetEaseGUI widgets rather than Blizzard templates on purpose: our
-    own dispatcher then skins this page exactly like the rest of MeetingStone, so
-    the options screen cannot look out of place with what it is configuring.
-
-    Percentages are stored 0-1 but edited 0-100 -- NumericBox is integer-only, and
-    "12" reads better than "0.12" for an opacity anyway.
-------------------------------------------------------------------------------]]
-
+-- Skin settings: the same navigation / scrollable-row visual language as
+-- NativeSettings, but this page only owns MeetingStoneEllesmereUIDB.
 local ADDON, ns = ...
-
 local TAB_NAME = "界面美化"
+local L = ns.SettingsLayout
+local PAD, NAV, ROW = L.PAD, L.NAV, L.ROW
+local Place, Label = L.Place, L.Label
+local Panel, UI
 
--- Four columns.
---
--- The content area is about 892x321: MainPanel is 447 tall, less topHeight 80 and
--- bottomHeight 26 for the Inset, less RegisterPanel's 10px padding top and bottom.
---
--- 4 headings x 26 + 6 field rows x 24 = 248, +12 top pad, +34 for the button row
--- = 294, so there is ~27px of slack. 24px rows give a 20px control room to
--- breathe; 22 was cramped. Columns are 212 wide: PAD + 4x212 = 860 inside 892.
-local PAD, COL_W, COLS = 12, 212, 4
-local ROW_H, SECTION_H = 24, 26
-
--------------------------------------------------------------------------------
---  Field builders.
---
---  Every cell has the SAME geometry: label left-aligned at the column's left
---  edge, control right-aligned at its right edge. That is the whole point --
---  NumericBox:SetLabel right-aligns the label against the box, while a CheckBox
---  hangs its text off to the right, so mixing the two straight out of the box
---  left every column with a different label start and a ragged grid. We draw the
---  labels ourselves instead and only let the widgets supply their controls.
--------------------------------------------------------------------------------
-
--- Control widths, right-aligned inside the column.
-local NUM_W, NUM_H   = 46, 20
-local CHECK_W        = 24
-local SWATCH_W       = 20
-local CTRL_PAD       = 10   -- gap between the column's right edge and the control
-
-local function ColLeft(x)  return x end
-local function CtrlLeft(x, w) return x + COL_W - w - CTRL_PAD end
-
--- Left-aligned caption, clipped to whatever room the control leaves.
-local function NewLabel(parent, text, x, y, ctrlW)
-    local fs = parent:CreateFontString(nil, "OVERLAY")
-    -- GameFontHighlight is 12pt, matching the labelFontSize default, so the
-    -- captions sit at the same weight as the text inside the controls. The Small
-    -- variant is 10pt and read noticeably lighter than everything around it.
-    fs:SetFontObject("GameFontHighlight")   -- re-faced by ns.Font via the walk
-    fs:SetPoint("LEFT", parent, "TOPLEFT", ColLeft(x), y - ROW_H / 2)
-    fs:SetWidth(COL_W - ctrlW - CTRL_PAD - 8)
-    fs:SetJustifyH("LEFT")
-    fs:SetWordWrap(false)
-    fs:SetText(text)
-    return fs
-end
-
--- Integer field.
---
--- scale maps the stored value onto the editor: 100 turns a 0-1 fraction into a
--- readable 0-100 percentage, and -1 flips a stored negative into a positive
--- "reduce by" number. That flip is not cosmetic -- NumericBox:SetMinMaxValues
--- hard errors on a negative minimum (NetEaseGUI-2.0/Widget/NumericBox.lua), so a
--- signed range cannot be edited directly.
-local function NewNumber(parent, cfg, x, y)
-    NewLabel(parent, cfg.text, x, y, NUM_W)
-
-    local box = ns.GUI:GetClass("NumericBox"):New(parent)
-    local scale = cfg.scale or 1
-    box:SetSize(NUM_W, NUM_H)
-    box:SetPoint("LEFT", parent, "TOPLEFT", CtrlLeft(x, NUM_W), y - ROW_H / 2)
-    box:SetMinMaxValues(cfg.min, cfg.max)
-    box:SetValueStep(cfg.step or 1)
-    box:EnableControl()
-
-    box.Reload = function()
-        local v = ns.Get(cfg.key) or 0
-        box:SetNumber(math.floor(v * scale + 0.5))
-    end
-    box:SetCallback("OnValueChanged", function(_, value)
-        if box.loading then return end
-        ns.Set(cfg.key, scale == 1 and value or (value / scale))
-    end)
-    return box
-end
-
-local function NewCheck(parent, cfg, x, y)
-    NewLabel(parent, cfg.text, x, y, CHECK_W)
-
-    local cb = ns.GUI:GetClass("CheckBox"):New(parent)
-    cb:SetSize(CHECK_W, CHECK_W)
-    cb:SetPoint("LEFT", parent, "TOPLEFT", CtrlLeft(x, CHECK_W), y - ROW_H / 2)
-    -- The caption is ours, so the widget's own label stays empty. That also keeps
-    -- CheckBox:SetText from widening the hit rect to the right, over the control
-    -- in the next column.
-    cb:SetText("")
-    cb:SetScript("OnClick", function(self)
-        ns.Set(cfg.key, self:GetChecked() and true or false)
-        if cfg.reload then ns.ShowReloadHint() end
-    end)
-    cb.Reload = function() cb:SetChecked(ns.Get(cfg.key) and true or false) end
-    return cb
-end
-
--- Colour swatch. Uses Blizzard's picker, the only colour UI in the game, and one
--- EllesmereUI's own window packs already skin.
-local function NewColor(parent, cfg, x, y)
-    NewLabel(parent, cfg.text, x, y, SWATCH_W)
-
+local HINTS = {
+    useClassColor = "默认关闭，选中使用 EUI 图标绿；开启使用角色职业色。边框始终深色",
+    bgColor = "主窗口与过滤弹窗共用，不修改 EUI 的全局配色",
+    bgAlpha = "0% 完全透明，100% 完全不透明",
+    topBar = "在标题区域显示深色底条",
+    topBarShade = "调整标题条与窗口背景的明暗差异",
+    headerShade = "调整活动列表表头的明暗差异",
+    tabColor = "底部标签页底板使用独立颜色",
+    tabAlpha = "标签页位于窗口外，可单独保持不透明",
+    listFontSize = "活动列表中的队伍、成员与说明文字",
+    labelFontSize = "按钮、选项和下拉框文字",
+    tabFontSize = "底部标签页标题文字",
+    fontDelta = "相对原字号缩小；不影响上方三类独立字号",
+    memberIconScale = "成员职责图标跟随活动列表字号缩放",
+    roleFilterBar = "仅在适用的活动类型中显示底部职责快捷项",
+    noAutoFilterPopup = "旧版过滤器兼容项；合并后的筛选窗口始终手动打开",
+    skinRows = "使用统一行底色与选中效果 · 更改后需要重载",
+    zebra = "交替显示深浅底色，方便逐行阅读",
+    zebraAlpha = "控制交替底色的强度",
+    hoverAlpha = "鼠标悬停时的背景亮度",
+    selectBar = "在选中行左侧显示强调色竖条",
+    selectAlpha = "选中活动时的背景填充强度",
+    barWidth = "选中行强调色竖条的宽度",
+}
+local function NewColor(parent, cfg)
     local btn = CreateFrame("Button", nil, parent)
-    btn:SetSize(SWATCH_W, SWATCH_W)
-    btn:SetPoint("LEFT", parent, "TOPLEFT", CtrlLeft(x, SWATCH_W), y - ROW_H / 2)
-
     -- 1px dark edge so a near-black swatch is still findable on a dark panel.
     local edge = ns.Tex(btn, "BACKGROUND", 0, 0, 0, 1)
     edge:SetAllPoints(btn)
@@ -159,153 +73,197 @@ local function NewColor(parent, cfg, x, y)
     return btn
 end
 
--- Group heading: accent caption plus a hairline rule across the page, so the
--- groups actually read as groups. TitleWidget was doing neither -- with its
--- background hidden it was just floating text.
-local function NewSection(parent, text, y)
-    local fs = parent:CreateFontString(nil, "OVERLAY")
-    fs:SetFontObject("GameFontNormal")
-    fs:SetPoint("TOPLEFT", parent, "TOPLEFT", PAD, y - 2)
-    fs:SetText(text)
-    local ar, ag, ab = ns.S.GetAccentColor()
-    fs:SetTextColor(ar, ag, ab)
-
-    local rule = ns.Tex(parent, "ARTWORK", 1, 1, 1, 0.12)
-    rule:SetHeight(1)
-    rule:SetPoint("TOPLEFT", parent, "TOPLEFT", PAD, y - SECTION_H + 5)
-    rule:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -PAD, y - SECTION_H + 5)
-    return fs
-end
-
--------------------------------------------------------------------------------
---  Layout
--------------------------------------------------------------------------------
-local FIELDS = {
-    { section = "窗口" },
-    { kind = "color",  key = "bgColor",   text = "背景颜色" },
-    { kind = "number", key = "bgAlpha",   text = "背景不透明度 %", min = 0, max = 100, scale = 100, step = 5 },
-    { kind = "check",  key = "topBar",       text = "标题栏深色条" },
-    { kind = "number", key = "topBarShade", text = "标题栏对比 %", min = 0, max = 100, scale = 100, step = 2 },
-    { kind = "number", key = "headerShade", text = "表头对比 %", min = 0, max = 100, scale = 100, step = 2 },
-    { kind = "check",  key = "roleFilterBar", text = "底部职责过滤", reload = true },
-    { kind = "check",  key = "noAutoFilterPopup", text = "打开时不弹过滤面板", reload = true },
-
-    { section = "字号" },
-    { kind = "number", key = "listFontSize",  text = "活动列表字号", min = 8, max = 20 },
-    { kind = "number", key = "labelFontSize", text = "按钮/选项字号", min = 8, max = 20 },
-    { kind = "number", key = "tabFontSize",   text = "标签页字号",   min = 8, max = 20 },
-    { kind = "number", key = "fontDelta",     text = "其余文字缩小", min = 0, max = 6, scale = -1 },
-
-    { section = "列表行" },
-    { kind = "check",  key = "zebra",       text = "斑马纹" },
-    { kind = "number", key = "zebraAlpha",  text = "斑马纹深浅 %",  min = 0, max = 100, scale = 100, step = 2 },
-    { kind = "number", key = "hoverAlpha",  text = "悬停亮度 %",    min = 0, max = 100, scale = 100, step = 1 },
-    { kind = "check",  key = "selectBar",   text = "选中强调色竖条" },
-    { kind = "number", key = "selectAlpha", text = "选中填充 %",    min = 0, max = 100, scale = 100, step = 2 },
-    { kind = "number", key = "barWidth",    text = "竖条宽度 px",   min = 1, max = 6 },
-    { kind = "check",  key = "skinRows",    text = "列表行皮肤", reload = true },
-    { kind = "check",  key = "memberIconScale", text = "成员图标跟随字号" },
-
-    { section = "底部标签页" },
-    { kind = "color",  key = "tabColor", text = "标签底板颜色" },
-    { kind = "number", key = "tabAlpha", text = "标签不透明度 %", min = 0, max = 100, scale = 100, step = 5 },
+local GROUPS = {
+    { title = "窗口与标签", fields = {
+        { kind = "check",  key = "useClassColor", text = "选中状态使用职业色" },
+        { kind = "color",  key = "bgColor", text = "窗口背景颜色" },
+        { kind = "number", key = "bgAlpha", text = "背景不透明度 %", min = 0, max = 100, scale = 100, step = 5 },
+        { kind = "check",  key = "topBar", text = "标题栏深色条" },
+        { kind = "number", key = "topBarShade", text = "标题栏对比 %", min = 0, max = 100, scale = 100, step = 2 },
+        { kind = "number", key = "headerShade", text = "表头对比 %", min = 0, max = 100, scale = 100, step = 2 },
+        { kind = "color",  key = "tabColor", text = "标签底板颜色" },
+        { kind = "number", key = "tabAlpha", text = "标签不透明度 %", min = 0, max = 100, scale = 100, step = 5 },
+    } },
+    { title = "字体与交互", fields = {
+        { kind = "number", key = "listFontSize", text = "活动列表字号", min = 8, max = 20 },
+        { kind = "number", key = "labelFontSize", text = "按钮 / 选项字号", min = 8, max = 20 },
+        { kind = "number", key = "tabFontSize", text = "标签页字号", min = 8, max = 20 },
+        { kind = "number", key = "fontDelta", text = "其余文字缩小", min = 0, max = 6, scale = -1 },
+        { kind = "check",  key = "memberIconScale", text = "成员图标随字号" },
+        { kind = "check",  key = "roleFilterBar", text = "底部快捷筛选" },
+        { kind = "check",  key = "noAutoFilterPopup", text = "禁用自动弹窗 *", reload = true },
+    } },
+    { title = "活动列表", fields = {
+        { kind = "check",  key = "skinRows", text = "列表行皮肤 *", reload = true },
+        { kind = "check",  key = "zebra", text = "交替行底色" },
+        { kind = "number", key = "zebraAlpha", text = "交替底色深浅 %", min = 0, max = 100, scale = 100, step = 2 },
+        { kind = "number", key = "hoverAlpha", text = "悬停亮度 %", min = 0, max = 100, scale = 100, step = 1 },
+        { kind = "check",  key = "selectBar", text = "选中强调色竖条" },
+        { kind = "number", key = "selectAlpha", text = "选中填充 %", min = 0, max = 100, scale = 100, step = 2 },
+        { kind = "number", key = "barWidth", text = "竖条宽度 px", min = 1, max = 6 },
+    } },
 }
 
-local Panel, widgets
-
+local SUBTITLES = {
+    "自绘控件强调色，以及窗口与标签底板的颜色和透明度",
+    "文字尺寸、成员图标与快捷筛选交互",
+    "列表行底色、悬停与选中效果",
+}
+local function Scroll(u, value)
+    local limit = math.max(0, u.content:GetHeight() - u.scroll:GetHeight())
+    u.scroll:SetVerticalScroll(math.max(0, math.min(value, limit)))
+end
+local function Layout(u)
+    local w, height = L.Page(u, Panel, u.hint)
+    if not w then return end
+    Place(u.reset, u.nav, 8, height - 2 * PAD - 66, NAV - 16, 26)
+    Place(u.reload, u.nav, 8, height - 2 * PAD - 34, NAV - 16, 26)
+    local y = 0
+    for _, row in ipairs(u.rows) do
+        local shown = row.category == u.selected
+        row.frame:SetShown(shown)
+        if shown then
+            L.Row(row, u.content, y, w, row.cfg.kind)
+            y = y + ROW + 4
+        end
+    end
+    u.content:SetHeight(math.max(1, y))
+    Scroll(u, u.scroll:GetVerticalScroll())
+end
 local function ReloadAll()
-    if not widgets then return end
-    for i = 1, #widgets do
-        local w = widgets[i]
-        if w.Reload then
-            w.loading = true
-            ns.Safe(w.Reload)
-            w.loading = nil
+    if not UI then return end
+    for _, row in ipairs(UI.rows) do
+        local c = row.control
+        if not row.editing then
+            c.loading = true
+            c.Reload()
+            c.loading = nil
         end
     end
 end
 ns.OnSettingChanged = ReloadAll
-
 function ns.ShowReloadHint()
-    if Panel and Panel.ReloadHint then Panel.ReloadHint:Show() end
-end
-
-local function Build(parent)
-    widgets = {}
-    local y = -PAD
-    local col, x = 0, PAD
-
-    for i = 1, #FIELDS do
-        local cfg = FIELDS[i]
-        if cfg.section then
-            if col > 0 then y = y - ROW_H end    -- close a half-filled row
-            col, x = 0, PAD
-            NewSection(parent, cfg.section, y)
-            y = y - SECTION_H
-        else
-            local w
-            if cfg.kind == "number" then
-                w = NewNumber(parent, cfg, x, y)
-            elseif cfg.kind == "check" then
-                w = NewCheck(parent, cfg, x, y)
-            elseif cfg.kind == "color" then
-                w = NewColor(parent, cfg, x, y)
-            end
-            if w then widgets[#widgets + 1] = w end
-            col = col + 1
-            if col >= COLS then
-                col, x = 0, PAD
-                y = y - ROW_H
-            else
-                x = PAD + col * COL_W
-            end
-        end
+    if UI then
+        UI.hint:SetText("部分设置已更改，请点击「重载界面」使其完全生效")
     end
-    if col > 0 then y = y - ROW_H end
-
-    local reset = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    reset:SetSize(110, 22)
-    reset:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", PAD, PAD)
-    reset:SetText("恢复默认")
-    reset:SetScript("OnClick", function()
-        ns.ResetAll()
-        ns.ShowReloadHint()
-    end)
-
-    local reload = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    reload:SetSize(110, 22)
-    reload:SetPoint("LEFT", reset, "RIGHT", 8, 0)
-    reload:SetText("重载界面")
-    reload:SetScript("OnClick", ReloadUI)
-
-    local hint = parent:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    hint:SetPoint("LEFT", reload, "RIGHT", 10, 0)
-    hint:SetText("有设置需要重载界面后生效")
-    hint:Hide()
-    parent.ReloadHint = hint
 end
-
--------------------------------------------------------------------------------
---  Registration
--------------------------------------------------------------------------------
+local function StopEditing()
+    if not UI then return end
+    for _, row in ipairs(UI.rows) do
+        if row.editing then row.control:ClearFocus() end
+    end
+end
+local function BuildRow(u, cfg, category)
+    local row = { cfg = cfg, category = category }
+    row.frame = CreateFrame("Frame", nil, u.content)
+    ns.Inset(row.frame)
+    row.label = Label(row.frame, cfg.text)
+    row.hint = Label(row.frame, HINTS[cfg.key], true)
+    row.frame:EnableMouse(true)
+    row.frame:SetScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(cfg.text)
+        GameTooltip:AddLine(HINTS[cfg.key], .8, .85, .88, true)
+        GameTooltip:Show()
+    end)
+    row.frame:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    local c
+    if cfg.kind == "number" then
+        c = ns.GUI:GetClass("NumericBox"):New(row.frame)
+        c:SetMinMaxValues(cfg.min, cfg.max)
+        c:SetValueStep(cfg.step or 1)
+        c:SetLabel(" "); c:SetLabel("")
+        c:EnableControl()
+        local scale = cfg.scale or 1
+        c.Reload = function() c:SetNumber(math.floor((ns.Get(cfg.key) or 0) * scale + .5)) end
+        local function save(value)
+            if c.loading or row.editing then return end
+            value = math.max(cfg.min, math.min(cfg.max, math.floor(value + .5)))
+            if ns.Get(cfg.key) ~= value / scale then ns.Set(cfg.key, value / scale) end
+        end
+        c:SetCallback("OnValueChanged", function(_, value) save(value) end)
+        c:HookScript("OnEditFocusGained", function() row.editing = true end)
+        c:HookScript("OnEditFocusLost", function(self) row.editing = nil; save(self:GetNumber()); ReloadAll() end)
+        c:SetScript("OnEscapePressed", function(self)
+            row.editing = nil; ReloadAll(); self:ClearFocus()
+        end)
+    elseif cfg.kind == "check" then
+        c = ns.GUI:GetClass("CheckBox"):New(row.frame)
+        c:SetText("")
+        c:SetScript("OnClick", function(self)
+            ns.Set(cfg.key, not not self:GetChecked())
+            if cfg.reload then ns.ShowReloadHint() end
+        end)
+        c.Reload = function() c:SetChecked(not not ns.Get(cfg.key)) end
+        ns.SkinSwitch(c)
+    else
+        c = NewColor(row.frame, cfg)
+        ns.Mark(c) -- don't let a later generic walk strip the swatch
+    end
+    row.control = c
+    u.rows[#u.rows + 1] = row
+    u.byKey[cfg.key] = row
+end
+local function Build(parent)
+    local u = { categories = {}, rows = {}, byKey = {}, selected = 1 }
+    UI = u
+    ns.D(parent).skinOptions = u
+    u.host = CreateFrame("Frame", nil, parent)
+    u.nav = CreateFrame("Frame", nil, u.host); ns.Inset(u.nav)
+    u.navTitle = Label(u.nav, "界面美化")
+    u.title = Label(u.host, GROUPS[1].title)
+    u.subtitle = Label(u.host, SUBTITLES[1], true)
+    u.hint = Label(u.host, "即时保存 · 带 * 的项目需要重载界面", true)
+    parent.ReloadHint = u.hint
+    u.scroll = CreateFrame("ScrollFrame", nil, u.host, "UIPanelScrollFrameTemplate")
+    u.content = CreateFrame("Frame", nil, u.scroll)
+    u.content:SetPoint("TOPLEFT", u.scroll, "TOPLEFT", 0, 0)
+    u.scroll:SetScrollChild(u.content)
+    u.scroll:EnableMouseWheel(true)
+    u.scroll:SetScript("OnMouseWheel", function(_, delta) Scroll(u, u.scroll:GetVerticalScroll() - delta * 40) end)
+    for i, group in ipairs(GROUPS) do
+        local cat, index = {}, i
+        cat.button = CreateFrame("Button", nil, u.nav, "UIPanelButtonTemplate")
+        cat.button:SetText(group.title)
+        ns.SkinButton(cat.button); ns.Mark(cat.button)
+        cat.mark = ns.Tex(cat.button, "OVERLAY", 1, 1, 1, 1)
+        ns.Accent(cat.mark, 1)
+        cat.mark:SetPoint("TOPLEFT", cat.button, "TOPLEFT", 0, -3)
+        cat.mark:SetSize(3, 26)
+        cat.button:SetScript("OnClick", function()
+            StopEditing()
+            u.selected = index
+            u.title:SetText(group.title); u.subtitle:SetText(SUBTITLES[index])
+            Scroll(u, 0); ReloadAll(); Layout(u)
+        end)
+        u.categories[i] = cat
+        for _, cfg in ipairs(group.fields) do BuildRow(u, cfg, i) end
+    end
+    u.reset = CreateFrame("Button", nil, u.nav, "UIPanelButtonTemplate")
+    u.reset:SetText("恢复默认")
+    u.reset:SetScript("OnClick", function()
+        StopEditing()
+        ns.GUI:CallMessageDialog("恢复全部界面美化设置为默认值？不会改动集合石的组队或过滤配置。", function(result)
+            if result then ns.ResetAll(); ns.ShowReloadHint() end
+        end)
+    end)
+    u.reload = CreateFrame("Button", nil, u.nav, "UIPanelButtonTemplate")
+    u.reload:SetText("重载界面")
+    u.reload:SetScript("OnClick", function() StopEditing(); ReloadUI() end)
+    ns.SkinButton(u.reset); ns.SkinButton(u.reload)
+    parent:HookScript("OnSizeChanged", function() Layout(u) end)
+    parent:HookScript("OnHide", StopEditing)
+    Layout(u)
+end
 function ns.SetupOptions(MainPanel)
     if not (MainPanel and MainPanel.RegisterPanel) then return end
     if MainPanel:IsPanelRegistered(TAB_NAME) then return end
-
     Panel = CreateFrame("Frame", nil, MainPanel)
     ns.GUI:Embed(Panel, "Refresh")
-
-    -- After 设置 when it exists, otherwise appended. MeetingStone's own tab is
-    -- named 设置 (module 'SettingPanel'), and MeetingStoneEX inserts after it too.
-    MainPanel:RegisterPanel(TAB_NAME, Panel, { after = "设置" })
-
+    MainPanel:RegisterPanel(TAB_NAME, Panel, L.TabArgs(MainPanel))
     Build(Panel)
     ReloadAll()
-
-    -- The page is built from NetEaseGUI widgets, so our own dispatcher skins it.
     ns.QueueWalk(Panel)
-    Panel:HookScript("OnShow", function(self)
-        ReloadAll()
-        ns.QueueWalk(self)
-    end)
+    Panel:HookScript("OnShow", function(self) ReloadAll(); Layout(UI); ns.QueueWalk(self) end)
 end

@@ -10,8 +10,9 @@
 
     House rules, taken from EllesmereUI's own window engine
     (EllesmereUIBlizzardSkin_WindowEngine.lua):
-      * art removal is alpha-only -- we never Hide()/SetParent()/EnableMouse
-        someone else's frame, and we never touch behaviour
+      * art removal is alpha-only; the isolated UnifiedFilters/NativeSettings
+        adapters may adopt controls/park old shells, preserving upstream data
+        and callbacks. No shared libraries or other addons' source are changed
       * per-object skin state lives in a weak-keyed EXTERNAL table, never as a
         field written onto a MeetingStone frame, so a MeetingStone update can
         never collide with us
@@ -101,20 +102,20 @@ function ns.HideStates(btn, keep)
 end
 
 -------------------------------------------------------------------------------
---  Accent-coloured elements. EllesmereUI's primitives track the user's live
---  accent colour on their own; anything WE draw has to be re-coloured by hand
---  when the accent changes, which is what S.OnLooksChanged is for.
+--  Our selection marks use fixed logo green or player class colour. Only
+--  these marks enter the repaint registry; permanent dark borders never do.
+--  EllesmereUI's own primitives remain independent of this local preference.
 -------------------------------------------------------------------------------
 local accents = setmetatable({}, { __mode = "k" })   -- texture -> alpha
 function ns.Accent(tex, alpha)
     if not tex then return end
     accents[tex] = alpha or 1
-    local r, g, b = ns.S.GetAccentColor()
+    local r, g, b = ns.GetAccentColor()
     tex:SetColorTexture(r, g, b, alpha or 1)
 end
 
 function ns.RefreshAccents()
-    local r, g, b = ns.S.GetAccentColor()
+    local r, g, b = ns.GetAccentColor()
     for tex, alpha in pairs(accents) do
         tex:SetColorTexture(r, g, b, alpha)
     end
@@ -123,6 +124,11 @@ end
 local FONT_MIN = 8
 
 local issecretvalue = issecretvalue or function() return false end
+local function FontReady(path, size)
+    return not issecretvalue(path) and not issecretvalue(size)
+        and type(path) == "string" and path ~= ""
+        and type(size) == "number" and size > 0 and size < math.huge
+end
 
 -- Re-font a FontString in the user's UI font, shifted by the fontDelta setting.
 --
@@ -161,11 +167,16 @@ function ns.Font(fs, r, g, b)
         return ns.ResizeFont(fs)
     end
 
+    -- An uninitialized native string can report (nil, -1), not just nil.
+    -- EUI's Font primitive preserves that size and would SetFont(..., -1).
+    -- Leave it to its owner to initialize; don't claim/cache a guessed size.
+    local path, size, flag = fs:GetFont()
+    if not FontReady(path, size) then return end
     ns.S.Font(fs, r, g, b)
 
     -- S.Font re-faces at the string's existing size; that is our base.
-    local path, size, flag = fs:GetFont()
-    if not (path and size) or issecretvalue(size) then return end
+    path, size, flag = fs:GetFont()
+    if not FontReady(path, size) then return end
     d.baseSize, d.fontPath, d.fontFlag = size, path, flag or ""
     ns.Track(ns.fonted, fs)
     ns.ResizeFont(fs)

@@ -51,23 +51,12 @@ local function Close(btn)
 end
 ns.SkinClose = Close
 
--- 20x20 NetEaseGUI checkboxes draw their box across the whole frame, unlike
--- Blizzard's 26x26 art which carries ~4px of transparent padding. borderInset
--- pulls the border in to sit exactly on the fill S.Checkbox lays at inset 4, so
--- the two coincide instead of leaving a gap (same call shape the Blizzard packs
--- use, e.g. EllesmereUIBlizzardSkin_WindowPacks.lua:3751).
+-- Keep the original CheckButton and its label/callbacks; only replace its art.
 local function Check(cb)
     if not cb then return end
-    ns.S.Checkbox(cb, { borderInset = 4 })
-    -- Label sits to the right of the box and is the widget's own label, so it
-    -- follows labelFontSize through a font object (自动进组 / 双击加入 / ...).
+    ns.SkinSwitch(cb)
     ns.SetLabelFonts(cb, "labelLeft", "labelLeft", "labelLeftOff")
-    -- CheckBox:SetText widens the hit rect by the label's measured width. Our font
-    -- changed that width after the fact, so re-run it or the label stops being
-    -- clickable at its new right edge.
-    if cb.SetText and cb.Text and cb.Text.GetText then
-        cb:SetText(cb.Text:GetText())
-    end
+    if cb.SetText and cb.Text and cb.Text.GetText then cb:SetText(cb.Text:GetText()) end
 end
 ns.SkinCheck = Check
 
@@ -214,26 +203,7 @@ ns.Hover = Hover
 --  of it, so that gets alphaed out separately (the button stays clickable --
 --  alpha is not hit-testing).
 -------------------------------------------------------------------------------
-function ns.SkinDropdown(dd)
-    local d = ns.D(dd)
-    if d.done then return end
-    d.done = true
-
-    ns.S.Dropdown(dd)
-
-    local mb = dd.MenuButton
-    if mb then
-        ns.HideStates(mb)
-        ns.S.FadeRegions(mb)
-        -- Claim it: a bare 24x24 texture-only Button is exactly the shape the
-        -- close-button heuristic looks for, and S.CloseButton would stamp an X
-        -- over the house dropdown arrow.
-        ns.Mark(mb)
-    end
-    -- Dropdown.Text IS the button's label (SetFontString in the constructor), so
-    -- it needs a font object, not SetFont.
-    ns.SetLabelFonts(dd, "labelLeft", "labelLeft", "labelLeftOff")
-end
+-- The dropdown wrapper lives in Controls.lua (also used by the homepage).
 
 -------------------------------------------------------------------------------
 --  Single-line inputs: InputBox and its subclasses NumericBox / SearchBox.
@@ -566,7 +536,16 @@ function ns.SkinDropMenuItem(item)
     if d.done then return end
     d.done = true
 
-    ns.SkinRowStates(item)
+    -- DropMenuItem is a CheckButton even for navigation-only parent entries.
+    -- Its native checkbox texture already represents checkable options. A
+    -- full-row checked texture would turn any parent click into fake selection.
+    Hover(item, G("hoverAlpha"))
+    if item.SetCheckState then
+        hooksecurefunc(item, "SetCheckState", function(self)
+            if not self.checkable then self:SetChecked(false) end
+        end)
+        if not item.checkable then item:SetChecked(false) end
+    end
 
     if item.Arrow then
         item.Arrow:SetTexture("Interface\\AddOns\\EllesmereUI\\media\\icons\\eui-arrow-right.png")
@@ -713,6 +692,41 @@ function ns.SkinGridItem(cell)
     ns.Track(ns.grids, cell)
 end
 
+-- OperationGrid creates plain child Buttons after its base constructor. The
+-- deferred class dispatch must skin those children explicitly: a font-only cell
+-- pass cannot flatten actions in rows created after the panel's initial walk.
+function ns.SkinOperationGrid(cell)
+    ns.SkinGridItem(cell)
+    local d = ns.D(cell)
+    if d.operationActions then return end
+    local invite, decline = cell.InviteButton, cell.DeclineButton
+    if not (invite and decline) then return end
+    Button(invite)
+    Button(decline)
+    ns.Mark(invite); ns.Mark(decline)
+
+    -- Keep the replacement on a mouse-transparent child, so a later button
+    -- skin/engine repaint cannot fade it together with the old red-X atlas.
+    -- Neither action, its anchors, its spinner nor its native handler changes.
+    local host = CreateFrame("Frame", nil, decline)
+    host:SetAllPoints(decline)
+    host:EnableMouse(false)
+    ns.Mark(host)
+    local icon = host:CreateTexture(nil, "OVERLAY")
+    icon:SetAtlas("uitools-icon-close")
+    icon:SetDesaturated(true)
+    icon:SetSize(12, 12)
+    icon:SetPoint("CENTER", host, "CENTER", 0, 0)
+    icon:SetVertexColor(.95, .28, .28, 1)
+    d.operationActions = { host=host, icon=icon }
+    local function reflect()
+        host:SetAlpha(decline:IsEnabled() and 1 or .4)
+    end
+    decline:HookScript("OnEnable", reflect)
+    decline:HookScript("OnDisable", reflect)
+    reflect()
+end
+
 -- Scale relative to 12, the stock body size, and clamped: the column header width
 -- is fixed, so an unbounded scale would spill into the next column.
 function ns.PaintMemberIcons(display)
@@ -834,7 +848,7 @@ local SPEC = {
     -- DataGridViewGridItem derives from Button, not ItemButton
     { "RoleItem",              "SkinGridItem", true },
     { "SummaryGrid",           "SkinGridItem", true },
-    { "OperationGrid",         "SkinGridItem", true },
+    { "OperationGrid",         "SkinOperationGrid", true },
     { "MemberDisplay",         "SkinGridItem", true },
     { "DataGridViewGridItem",  "SkinGridItem"       },
     { "ItemButton",            "SkinRow"            },
@@ -895,7 +909,7 @@ local function Generic(f)
     if ot == "CheckButton" then
         -- Raw CheckButtons with Blizzard's checkbox art: FilterBox.Check,
         -- CreatePanel.PrivateGroup, MeetingStoneEX's CheckBox.Check.
-        return Check(f)
+        if ns.IsSwitchCheckbox(f) then return Check(f) end
     elseif ot == "EditBox" then
         return EditBox(f)
     elseif ot == "Slider" then

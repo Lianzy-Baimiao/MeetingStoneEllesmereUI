@@ -7,3 +7,9 @@
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Python test caches / local generated schematics
+__pycache__/
+*.py[cod]
+.pytest_cache/
+/tests/*-preview.png

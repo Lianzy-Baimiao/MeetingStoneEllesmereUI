@@ -137,9 +137,11 @@ end
 --  than no shortcut at all, and the only way to guarantee identical behaviour is to
 --  go through the same click the popup would.
 --
---  Note the filters themselves only exist in 大秘境 mode, which is when
---  MeetingStoneEX builds BlzFilterPanel -- so the bar simply does not appear
---  otherwise, and is rebuilt on show once the panel exists.
+--  EX_INIT creates these controls for every activity type. Their existence is
+--  NOT an availability check: these particular filters apply only to mplus.
+--  Shortcuts follow the selected activity and the individual controls' shown
+--  flags, NOT the popup's visibility. Closing the popup must leave usable
+--  shortcuts on the browse panel, without changing upstream filter state.
 -------------------------------------------------------------------------------
 -- Two groups, because the bottom bar has an obstacle in the middle: BrowsePanel's
 -- SignUpButton is anchored ('BOTTOM', MainPanel, 'BOTTOM', 0, 4) at
@@ -190,8 +192,86 @@ local ROLE_GROUPS = {
 }
 
 local ROLE_BAR_X, ROLE_BAR_Y = 72, 4   -- clear of the 图示 legend at x=10..60
-local ROLE_BOX_W, ROLE_GAP   = 22, 16
-local ROLE_BTN_GAP           = 14      -- breathing room after the centre button
+local ROLE_GAP = 16
+
+local function IsRoleActivity(p)
+    local dropdown = p.ActivityDropdown
+    local item = dropdown and dropdown.GetItem and dropdown:GetItem()
+    return item and item.value == "mplus"
+end
+
+-- Keep the upstream three-second search cooldown. A burst of changes while the
+-- refresh button is disabled becomes one search for the latest saved filters.
+local function FlushRoleSearch(p)
+    local d = ns.D(p)
+    if not d.roleSearchPending then return end
+    if not IsRoleActivity(p) then
+        d.roleSearchPending = nil
+        return
+    end
+    if not p:IsVisible() then return end
+    local button = p.RefreshButton
+    if button and not button:IsEnabled() then return end
+    d.roleSearchPending = nil
+    if p.DoSearch then p:DoSearch() end
+end
+
+local function RequestRoleSearch(p)
+    if not IsRoleActivity(p) then return end
+    local d = ns.D(p)
+    d.roleSearchPending = true
+    local button = p.RefreshButton
+    if button and not ns.D(button).roleSearchHooked then
+        ns.D(button).roleSearchHooked = true
+        button:HookScript("OnEnable", function()
+            -- OnRefreshTimer also enables RefreshFilterButton after this event.
+            -- Wait until that method has finished before disabling both again.
+            C_Timer.After(0, function() FlushRoleSearch(p) end)
+        end)
+    end
+    -- Re-evaluate cached results immediately; search also retrieves teams that
+    -- were absent from the previous server-filtered response.
+    if p.ActivityList and p.ActivityList.Refresh then p.ActivityList:Refresh() end
+    FlushRoleSearch(p)
+end
+
+local function UpdateRoleVisibility(p)
+    local d = ns.D(p)
+    local applicable = IsRoleActivity(p)
+    local shown = ns.Get("roleFilterBar") and applicable
+    if not applicable then d.roleSearchPending = nil end
+    for _, pair in ipairs(d.roleBar or {}) do
+        -- IsShown is the control's own flag; IsVisible would also test its
+        -- ancestors and incorrectly hide shortcuts when the popup is closed.
+        local real, check = pair.real, pair.real.Check
+        pair.proxy:SetShown(not not (shown and real:IsShown() and check and check:IsShown()))
+    end
+end
+
+-- The unified host owns visibility; category changes only switch its contents.
+-- Fall back to 1.2.4's exclusivity if a future upstream layout cannot be adopted.
+local function SyncActivityFilters(p)
+    if not ns.SyncUnifiedFilters(p) and p.AdvFilterPanel and p.AdvFilterPanel:IsShown() then
+        for _, key in ipairs(AUTO_POPUP_KEYS) do
+            local panel = p[key]
+            if panel then panel:Hide() end
+        end
+    end
+    UpdateRoleVisibility(p)
+end
+
+local function HookBrowseActivity(p)
+    local dropdown = p.ActivityDropdown
+    if not dropdown or ns.D(dropdown).activityFiltersHooked then return end
+    ns.D(dropdown).activityFiltersHooked = true
+    -- Menu clicks call SetItem directly; saved selections call SetValue.
+    -- Keep MeetingStone's OnSelectChanged callback and its search logic intact.
+    for _, method in ipairs({ "SetItem", "SetValue" }) do
+        if type(dropdown[method]) == "function" then
+            hooksecurefunc(dropdown, method, function() ns.Safe(SyncActivityFilters, p) end)
+        end
+    end
+end
 
 local function SyncRoleBar(p)
     local bar = ns.D(p).roleBar
@@ -244,13 +324,53 @@ local function LayoutRoleBar(p)
     end
 end
 
+-- EX warns about contradictory roles but still saves them. Validate only
+-- those known native checkbox clicks BEFORE its OnChanged/save closure runs.
+-- No shared GUI hooks, no direct writes to EX/Blizzard saved-filter tables.
+local ROLE_OPPOSITE = {
+    needsTank = "hasTank", hasTank = "needsTank",
+    needsHealer = "hasHealer", hasHealer = "needsHealer",
+}
+local function GuardRoleConflicts(p)
+    if type(p.MD) ~= "table" then return end
+    local byKey = {}
+    for _, row in ipairs(p.MD) do
+        if row.dataValue and row.Check then byKey[row.dataValue] = row.Check end
+    end
+    for key, opposite in pairs(ROLE_OPPOSITE) do
+        local check = byKey[key]
+        if check and byKey[opposite] then
+            local d = ns.D(check)
+            d.roleOpposite = byKey[opposite] -- supports late/rebuilt peer rows
+            local original = check:GetScript("OnClick")
+            if original and original ~= d.roleGuard then
+                d.roleGuard = function(self, ...)
+                    if self:GetChecked() and d.roleOpposite:GetChecked() then
+                        self:SetChecked(false)
+                        local text = (key == "needsTank" or key == "hasTank")
+                            and "不能同时选择缺坦克和已有坦克，已取消本次选择。"
+                            or "不能同时选择缺治疗和已有治疗，已取消本次选择。"
+                        ns.GUI:CallWarningDialog(text, true, nil)
+                        return
+                    end
+                    return original(self, ...)
+                end
+                check:SetScript("OnClick", d.roleGuard)
+            end
+        end
+    end
+end
+
 local function BuildRoleBar(p)
-    if not ns.Get("roleFilterBar") then return end
     local d = ns.D(p)
     if d.roleBar then
         SyncRoleBar(p)
-        return LayoutRoleBar(p)
+        LayoutRoleBar(p)
+        UpdateRoleVisibility(p)
+        FlushRoleSearch(p)
+        return
     end
+    if not ns.Get("roleFilterBar") then return end
 
     local md = p.MD
     if type(md) ~= "table" or #md == 0 then return end   -- EX panel not built yet
@@ -280,8 +400,11 @@ local function BuildRoleBar(p)
                     local rc = box.Check
                     if not (rc and rc.Click) then return end
                     local want = self:GetChecked() and true or false
-                    if (rc:GetChecked() and true or false) ~= want then
-                        rc:Click()      -- MeetingStoneEX's own handler does the rest
+                    local before = not not rc:GetChecked()
+                    if before ~= want then
+                        rc:Click()      -- save through MeetingStoneEX's own handler
+                        self:SetChecked(not not rc:GetChecked())
+                        if before ~= not not rc:GetChecked() then RequestRoleSearch(p) end
                     end
                 end)
 
@@ -297,6 +420,17 @@ local function BuildRoleBar(p)
                     proxy:SetChecked(self:GetChecked() and true or false)
                 end)
 
+                -- Observe explicit source-row visibility even while its popup
+                -- is hidden (when OnShow/OnHide events alone are insufficient).
+                for _, control in ipairs({ box, box.Check }) do
+                    if not ns.D(control).roleVisibilityHooked then
+                        ns.D(control).roleVisibilityHooked = true
+                        for _, method in ipairs({ "Show", "Hide", "SetShown" }) do
+                            hooksecurefunc(control, method, function() UpdateRoleVisibility(p) end)
+                        end
+                    end
+                end
+
                 bar[#bar + 1] = {
                     proxy = proxy, real = box,
                     startsGroup = first or nil,
@@ -310,6 +444,14 @@ local function BuildRoleBar(p)
     if #bar == 0 then return end
     d.roleBar = bar
     LayoutRoleBar(p)
+    UpdateRoleVisibility(p)
+end
+
+-- Config refreshes do not rerun the boot passes. Toggle existing proxies live,
+-- and lazily create them if the option was off when the window first opened.
+function ns.ApplyRoleBar()
+    local p = ns.Module("BrowsePanel") or ns.EnvGet("BrowsePanel")
+    if p then BuildRoleBar(p) end
 end
 
 -- MeetingStone seats all three filter popups against the window's right edge
@@ -369,6 +511,12 @@ end
 -- Later rows are covered by the constructor hook and the UpdateItems hook.
 local function ListLike(list)
     if not list then return end
+    ns.SkinListSelections(list)
+    local d = ns.D(list)
+    if list.UpdateItems and not d.selectionHook then
+        d.selectionHook = true
+        hooksecurefunc(list, "UpdateItems", ns.SkinListSelections)
+    end
     local headers = list.sortButtons
     if type(headers) == "table" then
         for i = 1, #headers do ns.Safe(ns.SkinSortButton, headers[i]) end
@@ -496,8 +644,18 @@ end
 -------------------------------------------------------------------------------
 --  查找活动 / Browse
 -------------------------------------------------------------------------------
+local function RefreshBrowseExtras(p)
+    GuardRoleConflicts(p)
+    FilterPanels(p)
+    ns.SetupUnifiedFilters(p)
+    HookBrowseActivity(p) -- popup coordination must work with shortcuts disabled
+    BuildRoleBar(p)
+    SyncActivityFilters(p)
+end
+
 local function Skin_BrowsePanel(p)
     if not p then return end
+    ns.Safe(ns.SkinBrowseInputs, p)
 
     Buttons(p, "SignUpButton", "AdvButton", "RefreshButton",
                "ResetFilterButton", "RefreshFilterButton", "ExSearchButton")
@@ -505,8 +663,7 @@ local function Skin_BrowsePanel(p)
     -- and fights the flat block. It is ours to hide (not a Blizzard frame).
     if p.AdvButton and p.AdvButton.Shine then p.AdvButton.Shine:Hide() end
 
-    FilterPanels(p)
-    ns.Safe(BuildRoleBar, p)
+    ns.Safe(RefreshBrowseExtras, p)
     ns.Safe(SuppressAutoFilterPopup, p)
 
     -- The two MeetingStoneEX popups do not exist yet at login (EX_INIT builds
@@ -517,9 +674,17 @@ local function Skin_BrowsePanel(p)
     if not d.showHook then
         d.showHook = true
         p:HookScript("OnShow", function(self)
-            ns.Safe(FilterPanels, self)
-            ns.Safe(BuildRoleBar, self)
+            ns.Safe(RefreshBrowseExtras, self)
+            ns.Safe(ns.SkinBrowseInputs, self)
             ns.QueueWalk(self)
+        end)
+    end
+
+    -- EX can initialize while BrowsePanel is already visible, with no OnShow.
+    if not d.exInitHooked and type(p.EX_INIT) == "function" then
+        d.exInitHooked = true
+        hooksecurefunc(p, "EX_INIT", function(self)
+            ns.Safe(RefreshBrowseExtras, self)
         end)
     end
 
@@ -542,6 +707,7 @@ end
 -------------------------------------------------------------------------------
 local function Skin_ManagerPanel(p)
     if not p then return end
+    ns.Safe(ns.SkinTablePanel, p, "ManagerPanel")
     ns.SkinButton(p.RefreshButton)
     for _, key in ipairs({ "FullBlocker", "ApplicantListBlocker" }) do
         if p[key] then ns.Safe(ns.SkinCover, p[key]) end
@@ -550,6 +716,7 @@ end
 
 local function Skin_CreatePanel(p)
     if not p then return end
+    ns.Safe(ns.SkinTablePanel, p, "CreatePanel")
 
     Buttons(p, "CreateButton", "DisbandButton")
     for _, key in ipairs({ "ActivityType", "GeneralPlaystyle" }) do
@@ -572,6 +739,7 @@ end
 
 local function Skin_ApplicantPanel(p)
     if not p then return end
+    ns.Safe(ns.SkinTablePanel, p, "ApplicantPanel")
     ListLike(p.ApplicantList)
     if p.AutoInvite then ns.Safe(ns.SkinCheck, p.AutoInvite) end
 end
@@ -581,6 +749,7 @@ end
 -------------------------------------------------------------------------------
 local function Skin_RecentPanel(p)
     if not p then return end
+    ns.Safe(ns.SkinTablePanel, p, "RecentPanel")
     for _, key in ipairs({ "ActivityDropdown", "ClassDropdown", "RoleDropdown" }) do
         if p[key] then ns.Safe(ns.SkinDropdown, p[key]) end
     end
@@ -591,17 +760,21 @@ local function Skin_RecentPanel(p)
 end
 
 -------------------------------------------------------------------------------
---  设置 / Settings. AceConfig-driven: the BlizOptionsGroup frames are reparented
---  onto the module, so the walk reaches every control through the generic rules.
+--  设置 / Settings. NativeSettings owns the grouped presentation; the original
+--  AceConfig definitions still own storage, dependencies and confirmations.
 --  Note the registered module name is 'SettingPanel', not 'OptionPanel'.
 -------------------------------------------------------------------------------
 local function Skin_SettingPanel(p)
     if not p then return end
+    ns.SetupNativeSettings(p)
     ns.QueueWalk(p)
     local d = ns.D(p)
     if not d.showHook then
         d.showHook = true
-        p:HookScript("OnShow", function(self) ns.QueueWalk(self) end)
+        p:HookScript("OnShow", function(self)
+            ns.SetupNativeSettings(self)
+            ns.QueueWalk(self)
+        end)
     end
 end
 
@@ -642,6 +815,7 @@ end
 -------------------------------------------------------------------------------
 local function Skin_IgnoreListPanel(p)
     if not p then return end
+    ns.Safe(ns.SkinTablePanel, p, "IgnoreListPanel")
     ListLike(p.IgnoreList)
     ns.QueueWalk(p)
 end
@@ -678,10 +852,10 @@ function ns.Boot(S)
         ns.MSEnv = Env._NSList[ns.MS.baseName or "MeetingStone"]
     end
 
-    -- Frames we must never touch. MeetingStone borrows these straight off
-    -- Blizzard's Group Finder and reparents them into its own panels;
-    -- EllesmereUIBlizzardSkin_GroupFinder.lua already skins them, and painting
-    -- them again would stack two backdrops.
+    -- Shared Blizzard controls stay out of the generic descendant walk.
+    -- The homepage SearchBox has its own reversible BrowseInputs layer; never
+    -- run generic/frame heuristics over this borrowed control.
+    -- EntryCreation fields remain owned by the EUI Group Finder pack.
     local LFG = _G.LFGListFrame
     if LFG then
         local SP, EC = LFG.SearchPanel, LFG.EntryCreation
@@ -704,10 +878,18 @@ function ns.Boot(S)
         ns.Safe(ns.RefreshAccents)
         ns.Safe(ns.ApplyTabFont)
         ns.Safe(ns.ApplyListFont)
+        ns.Safe(ns.ApplyBrowseInputs)
     end)
 
     local MainPanel = ns.Module("MainPanel") or ns.EnvGet("MainPanel") or _G.MeetingStoneMainPanel
     ns.MainPanel = MainPanel
+    if MainPanel and MainPanel.SetScale and not ns.D(MainPanel).switchScaleHook then
+        ns.D(MainPanel).switchScaleHook = true
+        hooksecurefunc(MainPanel, "SetScale", function()
+            ns.Safe(ns.RefreshSwitches)
+            ns.Safe(ns.ApplyBrowseInputs)
+        end)
+    end
 
     for i = 1, #PASSES do
         local name, fn = PASSES[i][1], PASSES[i][2]
