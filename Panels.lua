@@ -495,7 +495,7 @@ local function FilterPanel(panel)
     ns.QueueWalk(panel)
 end
 
-local FILTER_KEYS = { "AdvFilterPanel", "BlzFilterPanel", "ExFilterPanel" }
+local FILTER_KEYS = { "AdvFilterPanel", "BlzFilterPanel", "ExFilterPanel", "ExSearchPanel" }
 
 -- MeetingStoneEX builds BlzFilterPanel and ExFilterPanel lazily, so this has to
 -- be re-runnable rather than a one-shot at login. Everything inside is guarded.

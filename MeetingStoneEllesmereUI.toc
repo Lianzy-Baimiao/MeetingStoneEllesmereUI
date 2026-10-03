@@ -4,7 +4,7 @@
 ## Notes: Paints MeetingStone_Happy in the EllesmereUI house style.
 ## Notes-zhCN: 让集合石开心快乐版 (MeetingStone_Happy) 使用 EllesmereUI 风格。
 ## Author: 白描
-## Version: 1.4.15
+## Version: 1.4.18
 ## OptionalDeps: EllesmereUI, EllesmereUIBlizzardSkin, MeetingStone, MeetingStoneEX
 ## SavedVariables: MeetingStoneEllesmereUIDB
 ## IconTexture: Interface\AddOns\EllesmereUI\media\eg-logo.tga

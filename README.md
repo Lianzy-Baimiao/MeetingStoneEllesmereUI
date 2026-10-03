@@ -1,14 +1,16 @@
 # MeetingStoneEllesmereUI
 
-让**集合石**（MeetingStone / MeetingStone_Happy 开心快乐版）使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的美化插件，统一界面外观，并优化设置、筛选和列表操作体验。
+让 **MeetingStone_Happy 集合石开心快乐版**使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的美化插件，统一界面外观，并优化设置、筛选和列表操作体验。
 
-**当前版本：1.4.15** · **作者：白描** · **正式服**
+**当前版本：1.4.18** · **作者：白描** · **正式服**
 
 [CurseForge 下载](https://www.curseforge.com/wow/addons/meetingstoneellesmereui) · [更新日志](CHANGELOG.md) · [问题反馈](https://github.com/Lianzy-Baimiao/MeetingStoneEllesmereUI/issues)
 
+> **适用范围仅限 EllesmereUI 环境下的 MeetingStone_Happy 集合石开心快乐新 UI 版、经典 UI 版。其他集合石版本不支持；不能脱离 EllesmereUI 独立运行。**
+
 ## 实际截图
 
-以下均为游戏内实际截图。首页直接展示，其余截图点击标题展开。
+以下为新 UI 版环境下的游戏内实际截图；经典 UI 版保留自身筛选控件，内容会有所不同。首页直接展示，其余截图点击标题展开。
 
 ### 首页
 
@@ -47,23 +49,34 @@
 - **统一外观**：深色面板、直角按钮、统一字体，覆盖首页、管理活动、最近玩友、设置、界面美化和屏蔽玩家列表。
 - **重新设计设置页**：「设置」与「界面美化」采用一致的分类导航、对齐和留白；多数美化设置即时生效。
 - **清晰的选中状态**：普通设置使用直角开关，列表多选保留方形复选框。选中默认使用 EUI 图标绿色，可选当前角色职业色；自绘边框始终深色。
-- **统一筛选窗口**：普通过滤与高级过滤合并为一个「筛选」入口，支持展开高级条件、滚动查看、应用并刷新；赛季副本提供「全选 / 全不选」。
-- **快捷职责筛选**：适用活动类型下显示首页底部快捷项，点击后刷新列表；关闭筛选窗口不会隐藏仍适用的快捷项。
-- **完善列表与管理操作**：优化活动说明输入区、邀请/拒绝按钮和刷新按钮；完善最近玩友活动筛选及屏蔽列表全选/取消全选。
+- **统一筛选窗口**：普通过滤与高级过滤合并为一个「筛选」入口，支持展开高级条件、滚动查看、应用并刷新；新 UI 版赛季副本提供「全选 / 全不选」，经典 UI 版保留其原有大秘境及职业筛选。
+- **快捷职责筛选**：新 UI 版适用活动类型下显示首页底部快捷项，点击后刷新列表；关闭筛选窗口不会隐藏仍适用的快捷项；classic 保留其原生底栏过滤，不替换为新版逻辑。
+- **完善列表与管理操作**：优化活动说明输入区、取消申请、邀请/拒绝按钮和刷新按钮；完善最近玩友活动筛选及屏蔽列表全选/取消全选。
 - **准确的报名提示**：双击加入后的括号显示当前专精对应职责，避免与地下城查找器的多选职责混淆。
 
 本插件复用集合石及 MeetingStoneEX 的原控件、保存回调和邀请流程，并对筛选刷新、互斥选项、列表全选等做有限适配；**不会改写它们的插件源文件**。
 
 ## 依赖与兼容
 
+**仅支持 EllesmereUI 环境下的 MeetingStone_Happy 集合石开心快乐新 UI 版、经典 UI 版。**
+
+已由用户在游戏内确认可用的版本：
+
+- 新 UI 版：`meeting-stone_-happy_20260821`。
+- 经典 UI 版：`meeting-stone_-happy_20260820_classic`。
+
+1.4.18 接入经典 UI 版原有的大秘境、职业、需要/避开及重置控件，并保留两版各自的筛选逻辑。两版不必同时安装，请选择其中一版及对应的 MeetingStoneEX，勿混用不同版本文件。
+
+其他集合石版本或分支不在支持范围内；后续上游大幅改版也可能需要重新适配。这里的 classic 指集合石界面版本，不是魔兽世界怀旧服。
+
 使用前请安装并启用：
 
-- **集合石**（MeetingStone / MeetingStone_Happy 开心快乐版）。
+- **MeetingStone_Happy 集合石开心快乐新 UI 版或经典 UI 版**。
 - **[EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui)**，以及提供皮肤接口的 **EllesmereUIBlizzardSkin / Blizz UI Enhanced** 组件，并开启相应第三方插件美化。
 
 **MeetingStoneEX 为可选增强**：部分赛季副本、职责筛选及屏蔽列表功能依赖其提供的控件，以当前安装版本为准。
 
-> 1.4.15 仍依赖 EllesmereUI 的皮肤接口，暂不支持完全脱离 EllesmereUI 独立运行。这里的 EUI 指 EllesmereUI，不是 ElvUI。
+> 本插件仍依赖 EllesmereUI 的皮肤接口，暂不支持完全脱离 EllesmereUI 独立运行。这里的 EUI 指 EllesmereUI，不是 ElvUI。
 
 支持的 Interface 标记：`120000 / 120001 / 120005 / 120007 / 120100`。
 
@@ -113,7 +126,7 @@ python -m unittest discover -s tests -q
 python tests/build_release.py
 ```
 
-构建脚本会运行完整测试、检查 Lua 5.1 语法，并在仓库上一级生成发布 ZIP。发布包不包含测试、截图或开发文档。当前有 **160 项离线回归测试**；游戏内最终观感和交互仍需人工验证。
+构建脚本会运行完整测试、检查 Lua 5.1 语法，并在仓库上一级生成发布 ZIP。发布包不包含测试、截图或开发文档。当前有 **188 项离线回归测试**；用户已确认新 UI 与经典 UI 两版可用。离线测试不代替不同分辨率、插件组合下的游戏内验证。
 
 ## License
 

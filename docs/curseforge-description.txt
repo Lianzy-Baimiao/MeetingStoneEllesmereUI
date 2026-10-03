@@ -1,0 +1,71 @@
+MeetingStoneEllesmereUI
+
+Supported addons — please read before installing
+
+ONLY for MeetingStone_Happy (集合石开心快乐版), new UI and classic UI editions, running under EllesmereUI. Other MeetingStone versions and forks are NOT supported. This skin cannot run independently of EllesmereUI.
+
+Confirmed working in game:
+- New UI: meeting-stone_-happy_20260821
+- Classic UI: meeting-stone_-happy_20260820_classic
+
+Install either edition, not both. Use its matching MeetingStoneEX files when enhanced filters are needed. “Classic UI” refers to the MeetingStone interface edition, NOT WoW Classic. This addon is for WoW Retail.
+
+Requirements
+
+- EllesmereUI and its EllesmereUIBlizzardSkin / Blizz UI Enhanced component, with third-party addon skinning enabled.
+- MeetingStone_Happy, new UI or classic UI edition.
+- MeetingStoneEX is optional for basic styling, but required for the enhanced filters it provides.
+
+EUI here means EllesmereUI, not ElvUI.
+
+Features
+
+- Dark, flat panels and consistent styling across activity lists, management, recent players, settings and the block list.
+- Adjustable fonts, window/tab colours and transparency, list stripes, hover and selection highlights. Most appearance changes apply immediately.
+- One scrollable filter window with expandable advanced conditions, apply and refresh actions.
+- Edition-aware filters: seasonal dungeon selection and role shortcuts for new UI; original dungeon, class, need/avoid and reset controls for classic UI. Each edition keeps its own filtering logic.
+
+Installation and notes
+
+Extract the MeetingStoneEllesmereUI folder into World of Warcraft/_retail_/Interface/AddOns, enable the dependencies, then /reload.
+
+No MeetingStone or MeetingStoneEX source files are modified. To stop this skin's styling and adjustments, disable it and reload. Settings are currently in Simplified Chinese; other client languages are not fully verified. Future upstream UI changes may require another compatibility update.
+
+This is an independent skin, not affiliated with or endorsed by EllesmereUI's author.
+
+中文说明
+
+MeetingStoneEllesmereUI
+
+适用范围（安装前必读）
+
+仅适用于 EllesmereUI 环境下的 MeetingStone_Happy 集合石开心快乐新 UI 版、经典 UI 版。其他集合石版本、分支不支持；本插件不能脱离 EllesmereUI 独立运行。
+
+已在游戏内确认可用：
+- 新 UI 版：meeting-stone_-happy_20260821
+- 经典 UI 版：meeting-stone_-happy_20260820_classic
+
+两版任选其一，不要同时安装；需要增强筛选时，请使用对应版本附带的 MeetingStoneEX，勿混用文件。classic 指集合石的界面版本，不是魔兽世界怀旧服。本插件用于魔兽世界正式服。
+
+安装依赖
+
+- EllesmereUI 及其 EllesmereUIBlizzardSkin / Blizz UI Enhanced 组件，并开启第三方插件美化。
+- MeetingStone_Happy 集合石开心快乐新 UI 版或经典 UI 版。
+- MeetingStoneEX 对基础美化为可选，但由它提供的增强筛选需要启用它。
+
+这里的 EUI 指 EllesmereUI，不是 ElvUI。
+
+主要功能
+
+- 深色扁平风格，统一活动列表、活动管理、最近玩友、设置和屏蔽列表的外观。
+- 可调字体、窗口与标签页颜色/透明度、列表斑马纹、悬停及选中效果；多数外观设置即时生效。
+- 一个“筛选”入口，支持滚动查看、展开高级条件、应用并刷新。
+- 按版本适配筛选：新 UI 版提供赛季副本选择及职责快捷项；经典 UI 版保留原有副本、职业、需要/避开和重置控件，沿用各自的筛选逻辑。
+
+安装与说明
+
+将 MeetingStoneEllesmereUI 文件夹放入 World of Warcraft/_retail_/Interface/AddOns，启用依赖及本插件后输入 /reload。
+
+不修改集合石或 MeetingStoneEX 源文件。停用本插件并重载后，不再应用其美化与调整。设置页目前为简体中文，其他客户端语言尚未全面验证；上游界面后续大幅改动可能需要重新适配。
+
+本项目是独立皮肤，与 EllesmereUI 作者无隶属关系，也未获其背书。

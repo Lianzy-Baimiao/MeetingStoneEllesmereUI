@@ -236,3 +236,69 @@ callbacks, pending/disabled/status rendering, fixed red reject glyph, pooling an
 engine reapplication, and refresh-label padding/centering at 8–20 font sizes.
 The six tests ran red before the fix. Full suite: 160 tests. No live invitations,
 rejections, applicant refresh API calls or SavedVariables writes are performed.
+
+## Minimum-rating persistence (1.4.16)
+
+Run just this regression loop:
+
+```
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p test_minimum_rating.py -v
+```
+
+Twelve tests execute the installed MeetingStone FilterBox constructor/methods and
+unchanged EX filter creation/save callbacks captured in fixtures on 2026-10-03.
+The focused mock models NumericBox clamping/value-change events and copies the
+Blizzard filter at API boundaries; a fresh Lua runtime represents /reload.
+These fixtures are offline only, not shipped or loaded by the addon.
+Before the fix, the loop failed with "minimum rating re-enabled after
+disable/apply/reload" and "zero rating initialized enabled". The old generic
+apply test did not model the native hidden maximum or toggle semantics.
+
+In game after installing the update:
+1. Set a positive minimum rating, then switch it off and /reload WITHOUT Apply.
+   Confirm it is still off. Disabled is represented as 0 (no rating restriction).
+2. Repeat with Apply before reload; also change a role/dungeon after disabling.
+   None of these saves may restore the old rating.
+3. Enable, enter a new positive score, reload and confirm the score/checkbox.
+   Within one session, off/on restores the last positive score; after reloading
+   while off, enabling starts at 1 until a new score is entered.
+4. Confirm dungeon bulk selection and advanced reset leave rating alone, and
+   no extra search bypasses the existing cooldown. Real search results/rendering
+   are not covered by the offline mock.
+
+## Browse-list cancel action (1.4.17)
+
+```powershell
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p test_summary_cancel.py -v
+python MeetingStoneEllesmereUI/tests/render_summary_cancel_preview.py
+```
+
+Six tests execute the unmodified SummaryGrid constructor/state machine and the
+BrowsePanel cancellation callback captured from the installed addon on 2026-10-03.
+C_LFGList.CancelApplication is a spy: tests never cancel real applications. They
+cover explicit dispatch, stock-art removal, centered icon and countdown spacing,
+hover/disabled/hide feedback, permission tooltip, native status/spinner transitions,
+current activity ID after pooled reuse, and repeated EUI skin application.
+The generated normal/hover/disabled preview uses executed Lua geometry; atlas
+art is approximated and it is a schematic, not a screenshot.
+
+In game, apply to a group and inspect the final X in the main list. Check its
+alignment with the countdown, hover/disabled feedback, and that one click still
+cancels the correct application. Refresh/reuse rows and switch application states;
+no extra X should appear during cancellation, invitations or role checks. Verify
+voice icon, comment, timer, status and spinner still follow the original behavior.
+
+## Classic UI unified filter (1.4.18)
+
+```powershell
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p test_classic_filters.py -v
+```
+
+10 tests run pinned classic CheckBox, CreateExSearchPanel, footer/button, EX_INIT
+and SwitchPanel functions from the supplied 20260820_classic package. The missing
+classic inset assertion was run red before the patch; the complete suite now has
+188 tests. No native callbacks are replaced with a mock filter implementation.
+WoW frame APIs and search counters remain doubles, not game-client verification.
+See ../docs/classic-ui-compatibility.md for the root cause and manual checklist.
+The user confirmed both new UI and classic UI usable in game before promotion
+to 1.4.18. Runtime code is unchanged from the tested local build.

@@ -3,7 +3,8 @@
 -- permanently hidden parent, so native Show/Hide cannot create a second window.
 local ADDON, ns = ...
 local WIDTH, PAD, GAP = 300, 12, 8
-local KEYS = { "BlzFilterPanel", "ExFilterPanel", "AdvFilterPanel" }
+local ACTIVITY_KEYS = { "BlzFilterPanel", "ExFilterPanel", "ExSearchPanel" }
+local KEYS = { "BlzFilterPanel", "ExFilterPanel", "ExSearchPanel", "AdvFilterPanel" }
 
 local function IsDungeon(p)
     local item = p.ActivityDropdown and p.ActivityDropdown:GetItem()
@@ -22,6 +23,49 @@ local function HasDungeonRows(p)
         if IsDungeonRow(row) then return true end
     end
     return false
+end
+
+-- EX reuses a two-ended FilterBox for a one-ended rating. Its hidden 9999
+-- maximum makes UpdateCheck enable even a zero rating; its click callback only
+-- reads MinBox, ignoring the checkbox. Normalize THIS row to 0 = disabled so
+-- the native callback also updates EX's captured table before any later save.
+local function SetupMinimumRating(p)
+    if not (C_LFGList and C_LFGList.GetAdvancedFilter and C_LFGList.SaveAdvancedFilter) then return end
+    for _, row in ipairs(p.MD or {}) do
+        if not row.dataValue and row.MinBox and row.MaxBox and row.Check
+            and row.UpdateCheck and not row.MaxBox:IsShown()
+            and row.Check:GetText() == LFG_LIST_MINIMUM_RATING then
+            local d = ns.D(row)
+            if not d.minimumRating then
+                local state = {}
+                d.minimumRating = state
+                row.MinBox:SetMinMaxValues(0, 9999)
+                row.MaxBox:SetMinMaxValues(0, 0)
+                row.MaxBox:SetNumber(0)
+                row:UpdateCheck()
+                local initial = row.MinBox:GetNumber()
+                if initial > 0 then state.last = initial end
+
+                -- UpdateCheck first runs EX's OnChanged callback. Save only the
+                -- rating into a fresh snapshot, preserving dungeon/role fields.
+                -- Do not search here or bypass the native refresh cooldown.
+                hooksecurefunc(row, "UpdateCheck", function()
+                    local value = row.MinBox:GetNumber()
+                    if value > 0 then state.last = value end
+                    local filter = C_LFGList.GetAdvancedFilter()
+                    if filter and filter.minimumRating ~= value then
+                        filter.minimumRating = value
+                        C_LFGList.SaveAdvancedFilter(filter)
+                    end
+                end)
+                row.Check:HookScript("OnClick", function()
+                    -- SetNumber re-fires the native callback with the effective
+                    -- value, keeping later role/apply saves from reviving it.
+                    row.MinBox:SetNumber(row.Check:GetChecked() and (state.last or 1) or 0)
+                end)
+            end
+        end
+    end
 end
 
 local function SelectDungeons(p, checked)
@@ -69,7 +113,20 @@ local function Layout(u)
     Place(u.activityTitle, u.content, 0, y, width, 22)
     y = y + 28
     local key = IsDungeon(p) and "BlzFilterPanel" or "ExFilterPanel"
-    u.activityTitle:SetText(IsDungeon(p) and "活动条件 · 赛季地下城" or "活动条件 · 组队")
+    -- Classic has one EX panel, not the new UI's dungeon/party split. Its
+    -- original entry is available in every category (class filters are shared).
+    if not u.sections.BlzFilterPanel and not u.sections.ExFilterPanel
+        and u.sections.ExSearchPanel then key = "ExSearchPanel" end
+    local classic = key == "ExSearchPanel"
+    u.activityTitle:SetText(classic and "活动条件 · 大秘境与职业"
+        or IsDungeon(p) and "活动条件 · 赛季地下城" or "活动条件 · 组队")
+    if u.classicReset then
+        u.classicReset:SetShown(classic)
+        if classic then
+            Place(u.classicReset, u.content, 4, y, 160, 24)
+            y = y + 32
+        end
+    end
     local active = u.sections[key]
     local bulkShown = not not (active and IsDungeon(p) and HasDungeonRows(p))
     u.dungeonLabel:SetShown(bulkShown)
@@ -86,7 +143,7 @@ local function Layout(u)
         Place(u.empty, u.content, 4, y, width - 8, 36)
         y = y + 44
     end
-    for _, activityKey in ipairs({ "BlzFilterPanel", "ExFilterPanel" }) do
+    for _, activityKey in ipairs(ACTIVITY_KEYS) do
         local section = u.sections[activityKey]
         if section then
             section.inset:SetShown(section == active)
@@ -125,7 +182,7 @@ local function AdoptSection(u, key)
     if not (panel and panel.Inset) then return end
     if u.sections[key] and u.sections[key].panel == panel then return end
     local inset = panel.Inset
-    local rows = key == "BlzFilterPanel" and u.browse.MD
+    local rows = (key == "BlzFilterPanel" or key == "ExSearchPanel") and u.browse.MD
         or key == "AdvFilterPanel" and u.browse.filters
     if not rows then
         rows = {}
@@ -159,6 +216,18 @@ local function AdoptSection(u, key)
                 u.roll = button
                 button:SetParent(u.content)
                 ns.SkinButton(button)
+            end
+        end
+    elseif key == "ExSearchPanel" then
+        -- Classic's anonymous reset owns MDSearchs, class flags and need/avoid.
+        -- Keep that closure rather than imitating it with advanced-range reset.
+        for _, button in ipairs({ panel:GetChildren() }) do
+            if button.GetText and button:GetText() == "重置" and button:GetScript("OnClick") then
+                u.classicReset = button
+                button:SetParent(u.content)
+                button:SetText("重置大秘境与职业")
+                ns.SkinButton(button)
+                break
             end
         end
     end
@@ -217,9 +286,8 @@ local function Build(p)
     end)
     p.AdvButton:SetText("筛选")
     if p.AdvButton.SetTooltip then p.AdvButton:SetTooltip("活动条件与高级条件") end
-    p.AdvButton:SetScript("OnClick", function()
-        u.host:SetShown(not u.host:IsShown())
-    end)
+    u.toggle = function() u.host:SetShown(not u.host:IsShown()) end
+    p.AdvButton:SetScript("OnClick", u.toggle)
     u.host:HookScript("OnShow", function() Layout(u) end)
 
     -- Reuse the original footer objects. The reset closure only clears the five
@@ -250,18 +318,32 @@ local function Build(p)
     return u
 end
 
--- Safe to repeat on browse OnShow and late EX_INIT. No changes to SavedVariables
+-- Safe to repeat on browse OnShow and late EX_INIT. No skin SavedVariables
 -- or replacement of upstream dropdown callbacks / category search behavior.
 function ns.SetupUnifiedFilters(p)
     if not (ns.MainPanel and p.AdvButton and p.AdvFilterPanel
         and p.ResetFilterButton and p.RefreshFilterButton) then return end
+    SetupMinimumRating(p)
     local d = ns.D(p)
     if not d.unifiedFilters then d.unifiedFilters = Build(p) end
     local u = d.unifiedFilters
     for _, key in ipairs(KEYS) do AdoptSection(u, key) end
+    -- EX_INIT can replace AdvButton's script after Build has already run.
+    if p.AdvButton:GetScript("OnClick") ~= u.toggle then
+        p.AdvButton:SetScript("OnClick", u.toggle)
+    end
+    local extraWidth = 0
     if p.ExSearchButton then
-        p.ExSearchButton:SetParent(u.parking)
-        p.ExSearchButton:Hide()
+        if u.sections.ExSearchPanel or u.sections.BlzFilterPanel or u.sections.ExFilterPanel then
+            p.ExSearchButton:SetParent(u.parking)
+            p.ExSearchButton:Hide()
+        else
+            -- Unknown upstream layout: don't remove its only usable entry.
+            p.ExSearchButton:ClearAllPoints()
+            p.ExSearchButton:SetPoint("TOPRIGHT", ns.MainPanel, "TOPRIGHT",
+                -(10 + p.AdvButton:GetWidth() + GAP), -38)
+            extraWidth = p.ExSearchButton:GetWidth() + GAP
+        end
     end
     p.AdvButton:ClearAllPoints()
     p.AdvButton:SetPoint("TOPRIGHT", ns.MainPanel, "TOPRIGHT", -10, -38)
@@ -270,7 +352,7 @@ function ns.SetupUnifiedFilters(p)
         -- Independent anchors avoid a cycle when late EX_INIT temporarily
         -- anchors AdvButton back to RefreshButton before our post-hook runs.
         p.RefreshButton:SetPoint("TOPRIGHT", ns.MainPanel, "TOPRIGHT",
-            -(10 + p.AdvButton:GetWidth() + GAP), -38)
+            -(10 + p.AdvButton:GetWidth() + GAP + extraWidth), -38)
     end
     Layout(u)
     ns.QueueWalk(u.host)

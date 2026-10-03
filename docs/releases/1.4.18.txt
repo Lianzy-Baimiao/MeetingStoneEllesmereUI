@@ -1,0 +1,9 @@
+1.4.18
+
+English
+- Supports both MeetingStone_Happy new and classic UI editions under EllesmereUI.
+- Restores classic Mythic+ filters and fixes filter-button conflicts.
+
+中文
+- 支持 EllesmereUI 环境下的 MeetingStone_Happy 集合石开心快乐新 UI 版、经典 UI 版。
+- 修复经典版大秘境筛选缺失及筛选按钮冲突。

@@ -692,6 +692,54 @@ function ns.SkinGridItem(cell)
     ns.Track(ns.grids, cell)
 end
 
+-- Both list actions use the same restrained red X. The icon lives on a
+-- mouse-transparent child so EUI's later re-strip cannot erase it with the old
+-- atlas. Keep all native click/enable scripts, tooltips and visibility intact.
+local function DestructiveAction(button)
+    Button(button)
+    ns.Mark(button)
+    local host = CreateFrame("Frame", nil, button)
+    host:SetAllPoints(button)
+    host:EnableMouse(false)
+    ns.Mark(host)
+    local icon = host:CreateTexture(nil, "OVERLAY")
+    icon:SetAtlas("uitools-icon-close")
+    icon:SetDesaturated(true)
+    icon:SetSize(12, 12)
+    icon:SetPoint("CENTER", host, "CENTER", 0, 0)
+    local hovered = false
+    local function reflect()
+        local enabled = button:IsEnabled()
+        host:SetAlpha(enabled and 1 or .4)
+        if enabled and hovered then
+            icon:SetVertexColor(1, .5, .5, 1)
+        else
+            icon:SetVertexColor(.95, .28, .28, 1)
+        end
+    end
+    button:HookScript("OnEnter", function() hovered = button:IsEnabled(); reflect() end)
+    button:HookScript("OnLeave", function() hovered = false; reflect() end)
+    button:HookScript("OnHide", function() hovered = false; reflect() end)
+    button:HookScript("OnEnable", reflect)
+    button:HookScript("OnDisable", function() hovered = false; reflect() end)
+    reflect()
+    return { host=host, icon=icon }
+end
+
+-- SummaryGrid is created lazily for the browse list's final column. A generic
+-- font-only cell pass misses its cancel action (or strips its only icon later).
+function ns.SkinSummaryGrid(cell)
+    ns.SkinGridItem(cell)
+    local d, cancel = ns.D(cell), cell.CancelButton
+    if d.cancelAction or not cancel then return end
+    -- Compact square, vertically centered, with a 5px gap from the native
+    -- countdown ending 35px from the right. Do not move labels or the spinner.
+    cancel:SetSize(22, 22)
+    cancel:ClearAllPoints()
+    cancel:SetPoint("RIGHT", cell, "RIGHT", -8, 0)
+    d.cancelAction = DestructiveAction(cancel)
+end
+
 -- OperationGrid creates plain child Buttons after its base constructor. The
 -- deferred class dispatch must skin those children explicitly: a font-only cell
 -- pass cannot flatten actions in rows created after the panel's initial walk.
@@ -702,29 +750,8 @@ function ns.SkinOperationGrid(cell)
     local invite, decline = cell.InviteButton, cell.DeclineButton
     if not (invite and decline) then return end
     Button(invite)
-    Button(decline)
-    ns.Mark(invite); ns.Mark(decline)
-
-    -- Keep the replacement on a mouse-transparent child, so a later button
-    -- skin/engine repaint cannot fade it together with the old red-X atlas.
-    -- Neither action, its anchors, its spinner nor its native handler changes.
-    local host = CreateFrame("Frame", nil, decline)
-    host:SetAllPoints(decline)
-    host:EnableMouse(false)
-    ns.Mark(host)
-    local icon = host:CreateTexture(nil, "OVERLAY")
-    icon:SetAtlas("uitools-icon-close")
-    icon:SetDesaturated(true)
-    icon:SetSize(12, 12)
-    icon:SetPoint("CENTER", host, "CENTER", 0, 0)
-    icon:SetVertexColor(.95, .28, .28, 1)
-    d.operationActions = { host=host, icon=icon }
-    local function reflect()
-        host:SetAlpha(decline:IsEnabled() and 1 or .4)
-    end
-    decline:HookScript("OnEnable", reflect)
-    decline:HookScript("OnDisable", reflect)
-    reflect()
+    ns.Mark(invite)
+    d.operationActions = DestructiveAction(decline)
 end
 
 -- Scale relative to 12, the stock body size, and clamped: the column header width
@@ -847,7 +874,7 @@ local SPEC = {
     { "AutoCompleteItem",      "SkinRow"            },
     -- DataGridViewGridItem derives from Button, not ItemButton
     { "RoleItem",              "SkinGridItem", true },
-    { "SummaryGrid",           "SkinGridItem", true },
+    { "SummaryGrid",           "SkinSummaryGrid", true },
     { "OperationGrid",         "SkinOperationGrid", true },
     { "MemberDisplay",         "SkinGridItem", true },
     { "DataGridViewGridItem",  "SkinGridItem"       },
