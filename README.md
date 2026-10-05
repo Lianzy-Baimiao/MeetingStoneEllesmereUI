@@ -1,4 +1,5 @@
 # MeetingStoneEllesmereUI
+[![许可 MIT](https://img.shields.io/badge/许可-MIT-blue?style=flat-square)](LICENSE) [![赞赏 爱发电](https://img.shields.io/badge/赞赏-爱发电-946ce6?style=flat-square)](https://ifdian.net/a/lianzy)
 
 让 **MeetingStone_Happy 集合石开心快乐版**使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的美化插件，统一界面外观，并优化设置、筛选和列表操作体验。
 
