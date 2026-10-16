@@ -1,5 +1,15 @@
 # 更新记录
 
+## 1.4.22 — 2026-10-17
+
+### English
+- Lighter activity-list refresh: after every list update the skin looks for small checkboxes inside the rows; it now reads each frame's children once instead of once per child (a 12-row test list: 313 → 157 GetChildren calls). Same frames, same result.
+- No appearance, settings or SavedVariables changes from 1.4.21. 206 offline regression tests and 14 runtime Lua 5.1 syntax checks passed. Verify in the live client after a full restart.
+
+### 中文
+- 活动列表刷新更轻：每次列表更新后，皮肤会在行里查找小勾选框；现在每个框体只读取一次子控件，不再每个子控件读一次（12 行的测试列表：GetChildren 调用 313 → 157 次）。处理的框体和结果不变。
+- 相比 1.4.21 不改动外观、设置或存档。206 项离线回归测试及 14 个运行文件的 Lua 5.1 语法检查通过；实机效果需完全重启游戏后确认。
+
 ## 1.4.21 — 2026-10-16
 
 ### English

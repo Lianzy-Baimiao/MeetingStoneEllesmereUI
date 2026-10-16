@@ -177,8 +177,9 @@ end
 -- Full-row CheckButtons, radios and menu markers are deliberately untouched.
 local function SelectionChildren(frame, depth)
     if depth > 6 or not frame.GetChildren then return end
-    for i = 1, select("#", frame:GetChildren()) do
-        local child = select(i, frame:GetChildren())
+    -- Runs after every UpdateItems of the activity list: ask for the children once
+    -- per frame, not once per child (select(i, frame:GetChildren()) is quadratic).
+    for _, child in ipairs({ frame:GetChildren() }) do
         if child and not (child.IsForbidden and child:IsForbidden()) then
             if child.GetObjectType and child:GetObjectType() == "CheckButton"
                 and child:GetWidth() <= 36 and child:GetHeight() <= 36

@@ -147,4 +147,24 @@ class ControlsTests(unittest.TestCase):
             assert(rs.knob:GetLeft()==rs.host:GetLeft()+2)
         ''')
 
+    def test_list_selection_walk_reads_each_frames_children_once(self):
+        self.run_lua('''
+            local list=CreateFrame('Frame',nil,main); local boxes={}
+            for i=1,12 do
+                local row=CreateFrame('Button',nil,list)
+                for j=1,3 do
+                    local cell=CreateFrame('Frame',nil,row)
+                    local c=CreateFrame('CheckButton',nil,cell); c:SetSize(20,20)
+                    c.CheckedTexture=c:CreateTexture(); ns.D(c).switch=true; boxes[#boxes+1]=c
+                end
+            end
+            local mt=getmetatable(list); local native, calls=mt.GetChildren, 0
+            mt.GetChildren=function(f) calls=calls+1; return native(f) end
+            local function count(f) local n=1; for _,c in ipairs({native(f)}) do n=n+count(c) end; return n end
+            ns.SkinListSelections(list)
+            mt.GetChildren=native
+            assert(calls==count(list), ('GetChildren called %d times for %d frames'):format(calls, count(list)))
+            for _,c in ipairs(boxes) do assert(type(ns.D(c).switch)=='table', 'small checkbox not skinned') end
+        ''')
+
 if __name__=='__main__': unittest.main()

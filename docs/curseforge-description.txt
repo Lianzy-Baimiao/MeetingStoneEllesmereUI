@@ -14,7 +14,7 @@ Features
 
 Requires EllesmereUI and EllesmereUIBlizzardSkin / Blizz UI Enhanced with third-party skinning enabled. Enhanced filters require the matching MeetingStoneEX.
 
-Version 1.4.21 (including 1.4.20) skins the auto-apply button and note popup, aligns the Create tab voice-chat box and adds the optional voice-group filter. It keeps the Retail 12.1.5 Interface tag (120105). Older MeetingStone_Happy builds without auto-apply keep working without errors; the auto-apply styling only appears with 20261016 or later. Fully exit and restart the game after installation, and keep SavedVariables. Live client behavior still requires in-game verification.
+Version 1.4.22 (including 1.4.20-1.4.21) skins the auto-apply button and note popup, aligns the Create tab voice-chat box, adds the optional voice-group filter and makes activity-list refreshes lighter. It keeps the Retail 12.1.5 Interface tag (120105). Older MeetingStone_Happy builds without auto-apply keep working without errors; the auto-apply styling only appears with 20261016 or later. Fully exit and restart the game after installation, and keep SavedVariables. Live client behavior still requires in-game verification.
 
 中文
 
@@ -32,4 +32,4 @@ Version 1.4.21 (including 1.4.20) skins the auto-apply button and note popup, al
 
 需要 EllesmereUI 及 EllesmereUIBlizzardSkin / Blizz UI Enhanced 组件，并开启第三方插件美化。增强筛选需要对应版本的 MeetingStoneEX。
 
-1.4.21（含 1.4.20）美化自动申请按钮和备注弹窗，对齐创建活动页的语音聊天输入框，新增可选的屏蔽语音队伍；保留正式服 12.1.5 的 Interface 标记（120105）。不带自动申请的旧版集合石照常运行、不报错，只是没有相应样式。安装后请完全退出并重启游戏，保留 SavedVariables；实机行为仍需游戏内验证。
+1.4.22（含 1.4.20–1.4.21）美化自动申请按钮和备注弹窗，对齐创建活动页的语音聊天输入框，新增可选的屏蔽语音队伍，并减轻活动列表刷新的开销；保留正式服 12.1.5 的 Interface 标记（120105）。不带自动申请的旧版集合石照常运行、不报错，只是没有相应样式。安装后请完全退出并重启游戏，保留 SavedVariables；实机行为仍需游戏内验证。
