@@ -9,10 +9,12 @@ Features
 - In-game appearance settings for fonts, window/tab colours, transparency, list stripes and hover/selection highlights. Most changes apply instantly.
 - One scrollable filter window with expandable advanced conditions and apply/refresh actions.
 - Edition-aware filtering: seasonal dungeon selection and role shortcuts for new UI; original dungeon, class, need/avoid and reset controls for classic UI. Each edition keeps its own filtering logic.
+- Optional voice-group filter: hide browse results whose comment column shows the voice-chat icon (off by default). Your own listing and groups you applied to stay visible.
+- Styles the auto-apply button and note popup of MeetingStone_Happy 20261016 or later, and lines up the Create tab voice-chat box with the item level / score fields.
 
 Requires EllesmereUI and EllesmereUIBlizzardSkin / Blizz UI Enhanced with third-party skinning enabled. Enhanced filters require the matching MeetingStoneEX.
 
-Version 1.4.19 adds the Retail 12.1.5 Interface tag (120105), with no skin behavior or settings changes. The release archive now includes the existing MIT license. Fully exit and restart the game after installation, and keep SavedVariables. Live client behavior still requires in-game verification.
+Version 1.4.21 (including 1.4.20) skins the auto-apply button and note popup, aligns the Create tab voice-chat box and adds the optional voice-group filter. It keeps the Retail 12.1.5 Interface tag (120105). Older MeetingStone_Happy builds without auto-apply keep working without errors; the auto-apply styling only appears with 20261016 or later. Fully exit and restart the game after installation, and keep SavedVariables. Live client behavior still requires in-game verification.
 
 中文
 
@@ -25,7 +27,9 @@ Version 1.4.19 adds the Retail 12.1.5 Interface tag (120105), with no skin behav
 - 游戏内调整外观：字体大小、窗口与标签页颜色/透明度、列表斑马纹、悬停及选中效果，多数设置即时生效。
 - 合并筛选入口：在同一窗口滚动查看条件、展开高级筛选、应用并刷新，不必来回切换面板。
 - 按版本适配筛选：新UI版提供赛季副本选择和职责快捷项；经典UI版保留副本、职业、需要/避开及重置控件，沿用各自的筛选逻辑。
+- 可选屏蔽语音队伍：隐藏说明栏带小喇叭（语音）图标的队伍，默认关闭；自己的队伍和已申请的队伍照常显示。
+- 美化集合石 20261016 及以后版本的自动申请按钮和备注弹窗；创建活动页的语音聊天输入框与最低装等、最低分数对齐。
 
 需要 EllesmereUI 及 EllesmereUIBlizzardSkin / Blizz UI Enhanced 组件，并开启第三方插件美化。增强筛选需要对应版本的 MeetingStoneEX。
 
-1.4.19 增加正式服 12.1.5 的 Interface 标记（120105），不改动皮肤行为或配置；发布包补充附带现有 MIT 许可证。安装后请完全退出并重启游戏，保留 SavedVariables；实机行为仍需游戏内验证。
+1.4.21（含 1.4.20）美化自动申请按钮和备注弹窗，对齐创建活动页的语音聊天输入框，新增可选的屏蔽语音队伍；保留正式服 12.1.5 的 Interface 标记（120105）。不带自动申请的旧版集合石照常运行、不报错，只是没有相应样式。安装后请完全退出并重启游戏，保留 SavedVariables；实机行为仍需游戏内验证。
