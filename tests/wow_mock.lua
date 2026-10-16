@@ -46,7 +46,16 @@ function Frame:SetPoint(point, relative, relpoint, x, y)
     self.points[point]={point,relative or self.parent,relpoint or point,x or 0,y or 0}
 end
 function Frame:ClearAllPoints() self.points={}; self.allPoints=nil end
-function Frame:GetPoint() local _,p=next(self.points); if p then return unpack(p) end end
+local pointOrder={'TOPLEFT','TOP','TOPRIGHT','LEFT','CENTER','RIGHT','BOTTOMLEFT','BOTTOM','BOTTOMRIGHT'}
+function Frame:GetNumPoints() local n=0; for _ in pairs(self.points) do n=n+1 end; return n end
+function Frame:GetPoint(i)
+    if not i then local _,p=next(self.points); if p then return unpack(p) end; return end
+    local n=0
+    for _,name in ipairs(pointOrder) do
+        local p=self.points[name]
+        if p then n=n+1; if n==i then return unpack(p) end end
+    end
+end
 function Frame:SetAllPoints(f) self:ClearAllPoints(); self:SetPoint('TOPLEFT',f,'TOPLEFT'); self:SetPoint('BOTTOMRIGHT',f,'BOTTOMRIGHT'); self.allPoints=f end
 local factors={TOPLEFT={0,1},TOP={.5,1},TOPRIGHT={1,1},LEFT={0,.5},CENTER={.5,.5},RIGHT={1,.5},BOTTOMLEFT={0,0},BOTTOM={.5,0},BOTTOMRIGHT={1,0}}
 function Frame:Rect()

@@ -141,6 +141,14 @@ CreatePanel.ItemLevel=input(VoiceCard,88,23); CreatePanel.ItemLevel:SetLabel('�
 CreatePanel.Score=input(VoiceCard,88,23); CreatePanel.Score:SetLabel('最低分数')
 CreatePanel.VoiceBox=input(VoiceCard,84,18)
 CreatePanel.VoiceBox:SetPoint('TOP',CreatePanel.Score,'BOTTOM',0,-3)
+-- CreatePanel.lua: an unnamed label hung off the borrowed box's left edge.
+VoiceLabel=CreatePanel.VoiceBox:CreateFontString(); VoiceLabel:SetText('语音聊天')
+VoiceLabel:SetPoint('RIGHT',CreatePanel.VoiceBox,'LEFT',-8,0)
+-- VoiceItemLevelWidget's OnShow re-anchors the box (CreatePanel.lua:251).
+VoiceCard:SetScript('OnShow',function()
+    CreatePanel.VoiceBox:ClearAllPoints(); CreatePanel.VoiceBox:SetParent(VoiceCard)
+    CreatePanel.VoiceBox:SetPoint('TOP',CreatePanel.Score,'BOTTOM',0,-3); CreatePanel.VoiceBox:SetSize(84,18)
+end)
 CreatePanel.PrivateGroup=GUI:GetClass('CheckBox'):New(VoiceCard); CreatePanel.PrivateGroup:SetText('仅好友')
 CreatePanel.CrossFactionGroup=GUI:GetClass('CheckBox'):New(VoiceCard); CreatePanel.CrossFactionGroup:SetText('跨阵营')
 CreatePanel.CreateButton=button(CreatePanel,'创建活动'); CreatePanel.DisbandButton=button(CreatePanel,'解散活动')

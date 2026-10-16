@@ -33,6 +33,7 @@ local function CloseIn(frame)
         end
     end
 end
+ns.SkinCloseButtons = CloseIn -- also the auto-apply note popup (AutoApplyDialog.lua)
 
 -- The bottom tab row is anchored 10px in from the window's left edge, which the
 -- stock art hid: each tab's slices carry transparent padding, so the visible
@@ -644,7 +645,21 @@ end
 -------------------------------------------------------------------------------
 --  查找活动 / Browse
 -------------------------------------------------------------------------------
+-- MeetingStoneEX's optional auto-apply button (AutoApply.lua) sits left of
+-- RefreshButton and copies its template. Style it the same way, once; a button
+-- created after the first pass is caught on the next show or EX_INIT.
+local function SkinAutoApplyButton(p)
+    local b = p.AutoApplyButton
+    if not b or ns.D(b).autoApplySkinned then return end
+    ns.D(b).autoApplySkinned = true
+    ns.SkinButton(b)
+    ns.Mark(b)
+end
+
 local function RefreshBrowseExtras(p)
+    ns.Safe(SkinAutoApplyButton, p)
+    ns.Safe(ns.SetupAutoApplyDialog, p)
+    ns.Safe(ns.SetupVoiceFilter, p)
     GuardRoleConflicts(p)
     FilterPanels(p)
     ns.SetupUnifiedFilters(p)

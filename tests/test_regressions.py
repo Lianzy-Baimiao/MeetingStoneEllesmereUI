@@ -11,7 +11,7 @@ class RegressionTests(unittest.TestCase):
     def setUp(self):
         self.lua = LuaRuntime(unpack_returned_tuples=True)
         self.lua.execute((ROOT / 'tests/wow_mock.lua').read_text(encoding='utf-8-sig'))
-        for name in ('Config.lua', 'Controls.lua', 'BrowseInputs.lua', 'BrowseJoinControls.lua', 'TablePanels.lua', 'UnifiedFilters.lua', 'SettingsLayout.lua', 'NativeSettings.lua', 'Panels.lua', 'Options.lua'):
+        for name in ('Config.lua', 'Controls.lua', 'BrowseInputs.lua', 'BrowseJoinControls.lua', 'TablePanels.lua', 'UnifiedFilters.lua', 'VoiceFilter.lua', 'AutoApplyDialog.lua', 'SettingsLayout.lua', 'NativeSettings.lua', 'Panels.lua', 'Options.lua'):
             self.lua.execute("local source=...; assert(loadstring(source))('MeetingStoneEllesmereUI', ns)",
                              (ROOT / name).read_text(encoding='utf-8-sig'))
 
@@ -51,7 +51,7 @@ class RegressionTests(unittest.TestCase):
         self.run_lua('''
             ns.SetupOptions(main)
             local u=ns.D(main.options).skinOptions
-            assert(#u.rows==22 and #u.categories==3)
+            assert(#u.rows==23 and #u.categories==3)
             for index,cat in ipairs(u.categories) do
                 cat.button:Click(); local previous; local count=0
                 for _,row in ipairs(u.rows) do
@@ -60,7 +60,7 @@ class RegressionTests(unittest.TestCase):
                         previous=row.frame; count=count+1
                     end
                 end
-                assert(count==(index==1 and 8 or 7))
+                assert(count==(index==2 and 7 or 8))
             end
         ''')
 
@@ -154,7 +154,7 @@ class RegressionTests(unittest.TestCase):
             local count=0; for key in pairs(ns.DEFAULTS) do
                 assert(reads[key], 'missing option: '..key); count=count+1
             end
-            assert(count==22)
+            assert(count==23)
             local nums={}; for _,f in ipairs(frames) do
                 if f.widgetKind=='NumericBox' then table.insert(nums,f) end
             end

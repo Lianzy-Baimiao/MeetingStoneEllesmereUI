@@ -23,6 +23,7 @@ local HINTS = {
     memberIconScale = "成员职责图标跟随活动列表字号缩放",
     roleFilterBar = "仅在适用的活动类型中显示底部职责快捷项",
     noAutoFilterPopup = "旧版过滤器兼容项；合并后的筛选窗口始终手动打开",
+    hideVoiceGroups = "隐藏说明栏带小喇叭（语音）图标的队伍，多为工作室；默认关闭，自己的队伍和已申请的队伍照常显示",
     skinRows = "使用统一行底色与选中效果 · 更改后需要重载",
     zebra = "交替显示深浅底色，方便逐行阅读",
     zebraAlpha = "控制交替底色的强度",
@@ -94,6 +95,7 @@ local GROUPS = {
         { kind = "check",  key = "noAutoFilterPopup", text = "禁用自动弹窗 *", reload = true },
     } },
     { title = "活动列表", fields = {
+        { kind = "check",  key = "hideVoiceGroups", text = "屏蔽语音队伍" },
         { kind = "check",  key = "skinRows", text = "列表行皮肤 *", reload = true },
         { kind = "check",  key = "zebra", text = "交替行底色" },
         { kind = "number", key = "zebraAlpha", text = "交替底色深浅 %", min = 0, max = 100, scale = 100, step = 2 },
@@ -107,7 +109,7 @@ local GROUPS = {
 local SUBTITLES = {
     "自绘控件强调色，以及窗口与标签底板的颜色和透明度",
     "文字尺寸、成员图标与快捷筛选交互",
-    "列表行底色、悬停与选中效果",
+    "语音队伍屏蔽，以及列表行底色、悬停与选中效果",
 }
 local function Scroll(u, value)
     local limit = math.max(0, u.content:GetHeight() - u.scroll:GetHeight())

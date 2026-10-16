@@ -70,7 +70,7 @@ Repeating 全选/全不选 must be harmless. Switch to 自定义PVE: both button
 11. At the user's UI scale and resolution, inspect text widths, scrolling,
     backdrop/borders, bottom actions and clamping near the screen edge.
 
-Archives whitelist only the TOC runtime list plus CHANGELOG.md. Tests, docs,
+Archives whitelist only the TOC runtime list plus CHANGELOG.md and LICENSE. Tests, docs,
 previews, backups and addon_version.txt are excluded. The latter is an existing
 local updater marker, not the TOC version.
 
@@ -302,3 +302,38 @@ WoW frame APIs and search counters remain doubles, not game-client verification.
 See ../docs/classic-ui-compatibility.md for the root cause and manual checklist.
 The user confirmed both new UI and classic UI usable in game before promotion
 to 1.4.18. Runtime code is unchanged from the tested local build.
+
+## Auto-apply button (1.4.20)
+
+```powershell
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p test_auto_apply_button.py -v
+```
+
+3 tests run the real Browse pass with a counting SkinButton double: an
+auto-apply button that exists at boot is styled once and marked so the generic
+walk leaves it alone; a button created after the first pass is styled on the
+next show, still once; a missing button leaves the rest of the pass intact.
+The complete suite has 191 tests. The counter is not game-client verification.
+
+## Auto-apply popup, voice row and voice filter (1.4.21)
+
+```powershell
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p "test_auto_apply_dialog.py" -v
+python -m unittest discover -s MeetingStoneEllesmereUI/tests -p "test_voice_*.py" -v
+```
+
+`test_auto_apply_dialog.py` (4) runs the pinned, unmodified AutoApplyNote.lua
+(fixtures/AutoApplyNote-20261016.lua): the popup is skinned once after the
+first RequestStart, its title sits in the title band, the borrowed Description
+gets chrome only while parented to the popup and is fully restored on hide,
+confirm and when the native application dialog opens; native scripts survive.
+`test_voice_field.py` (3) checks the voice box as the third row of the item
+level/score column, label spacing, release of native width/anchors, and that
+MeetingStone's own re-anchor on show is corrected in the same pass.
+`test_voice_filter.py` (5) wraps the pinned NetEaseGUI Filter embed
+(fixtures/NetEaseFilterEmbed-20261016.lua): off by default, hides voice rows
+but keeps own/applied ones, re-wraps a later RegisterFilter once, resets with
+"恢复默认", and exposes the option row. `test_partial_update.py` (2) loads the skin without
+the two new files, as after an update with only /reload, and runs the browse,
+options and create-page passes without errors. The complete suite has 205 tests.
+Geometry and secret values are doubles, not game-client verification.

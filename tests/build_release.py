@@ -12,7 +12,7 @@ text = toc.read_text(encoding='utf-8-sig')
 version = re.search(r'^## Version: (.+)$', text, re.M).group(1)
 runtime = [line.strip() for line in text.splitlines()
            if line.strip() and not line.lstrip().startswith('#')]
-files = [toc.name, *runtime, 'CHANGELOG.md']
+files = [toc.name, *runtime, 'CHANGELOG.md', 'LICENSE']
 subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(ROOT / 'tests'), '-v'], check=True)
 lua = LuaRuntime()
 for name in runtime:

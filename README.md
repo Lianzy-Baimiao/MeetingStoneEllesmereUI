@@ -1,9 +1,8 @@
 # MeetingStoneEllesmereUI
-[![许可 MIT](https://img.shields.io/badge/许可-MIT-blue?style=flat-square)](LICENSE) [![赞赏 爱发电](https://img.shields.io/badge/赞赏-爱发电-946ce6?style=flat-square)](https://ifdian.net/a/lianzy)
 
 让 **MeetingStone_Happy 集合石开心快乐版**使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的美化插件，统一界面外观，并优化设置、筛选和列表操作体验。
 
-**当前版本：1.4.18** · **作者：白描** · **正式服**
+**当前版本：1.4.21** · **作者：白描** · **正式服**
 
 [CurseForge 下载](https://www.curseforge.com/wow/addons/meetingstoneellesmereui) · [更新日志](CHANGELOG.md) · [问题反馈](https://github.com/Lianzy-Baimiao/MeetingStoneEllesmereUI/issues)
 
@@ -79,7 +78,13 @@
 
 > 本插件仍依赖 EllesmereUI 的皮肤接口，暂不支持完全脱离 EllesmereUI 独立运行。这里的 EUI 指 EllesmereUI，不是 ElvUI。
 
-支持的 Interface 标记：`120000 / 120001 / 120005 / 120007 / 120100`。
+支持的 Interface 标记：`120000 / 120001 / 120005 / 120007 / 120100 / 120105`（含正式服 12.1.5）。
+
+1.4.19 更新正式服 12.1.5 版本声明，并在发布包中附带 MIT 许可证；不改动皮肤逻辑或已有配置。
+
+1.4.20 为查找页的“自动申请”按钮（存在时）套用与刷新按钮一致的扁平样式；不改动其他皮肤逻辑或已有配置。
+
+1.4.21 美化自动申请的备注弹窗；创建活动页的“语音聊天”输入框与最低装等、最低分数排成同一列；“界面美化 → 活动列表”新增「屏蔽语音队伍」，默认关闭，开启后隐藏说明栏带小喇叭图标的队伍（多为工作室），自己的队伍和已申请的队伍照常显示。
 
 ## 安装与更新
 

@@ -95,11 +95,70 @@ local function Input(p, s, f, owner, dropdown, height, textOwner)
     else ReleaseViewport(f, entry) end
     ns.SetControlChrome(f, active, dropdown, height, textOwner)
 end
+-- The voice box is Blizzard's EntryCreation.VoiceChat.EditBox, which
+-- MeetingStone re-anchors (84 wide, centred under Score) on every show. Seat it
+-- as a third row in the item level/score column; record and restore only the
+-- width and anchors we change (SetControlChrome owns its height).
+local VOICE_X, VOICE_W = 84, 112
+local function ReleaseVoice(v)
+    if not (v and v.native) then return end
+    local f, native = v.box, v.native
+    v.native = nil
+    f:SetWidth(native.width)
+    -- A new owner supplies its own anchors; restore only while still in ours.
+    if f:GetParent() == native.parent then
+        f:ClearAllPoints()
+        for _, point in ipairs(native.points) do f:SetPoint(unpack(point)) end
+    end
+end
+local function VoiceLabel(f)
+    -- MeetingStone's unnamed label: the one region anchored RIGHT to our LEFT.
+    for i = 1, select("#", f:GetRegions()) do
+        local r = select(i, f:GetRegions())
+        if r.GetObjectType and r:GetObjectType() == "FontString" then
+            local point, relative, relPoint = r:GetPoint(1)
+            if point == "RIGHT" and relative == f and relPoint == "LEFT" then return r end
+        end
+    end
+end
+local function PlaceVoice(v)
+    local f = v.box
+    if not v.native then
+        local points = {}
+        for i = 1, f:GetNumPoints() do points[i] = { f:GetPoint(i) } end
+        v.native = { parent = f:GetParent(), width = f:GetWidth(), points = points }
+    end
+    f:ClearAllPoints()
+    f:SetPoint("TOPLEFT", v.owner, "TOPLEFT", VOICE_X, -58)
+    if math.abs(f:GetWidth() - VOICE_W) > .001 then f:SetWidth(VOICE_W) end
+    v.label = v.label or VoiceLabel(f)
+    if v.label then
+        Label(v.label)
+        v.label:ClearAllPoints(); v.label:SetPoint("RIGHT", f, "LEFT", -5, 0)
+    end
+end
+local function Voice(p, s, f, owner)
+    if not f or not owner then return end
+    local v = s.voice
+    if not v then
+        v = { box = f, owner = owner }
+        s.voice = v
+        hooksecurefunc(f, "SetParent", function() if not Within(f, owner) then ReleaseVoice(v) end end)
+        -- MeetingStone's own OnShow re-anchors and re-sizes the box; lay the
+        -- page out again in the same pass so no native frame is drawn.
+        owner:HookScript("OnShow", function()
+            if p:IsVisible() and Within(f, owner) then ns.Safe(Refresh, p) end
+        end)
+    end
+    if p:IsVisible() and owner:IsVisible() and Within(f, owner) then PlaceVoice(v)
+    else ReleaseVoice(v) end
+end
 local function Release(s)
     for f, entry in pairs(s.inputs) do
         ReleaseViewport(f, entry)
         ns.SetControlChrome(f, false)
     end
+    ReleaseVoice(s.voice)
 end
 -- Header widths and already-created cell anchors must change together. Changing
 -- only a SortButton leaves pooled rows at the old column coordinates.
@@ -368,11 +427,13 @@ local function Create(p, s, main)
                 Input(p, s, f, voice, false)
             end
         end
-        -- Keep native title/voice anchors and all input callbacks. Description
-        -- below borrows viewport anchors only; release font/art/geometry on hide.
+        -- Keep the native title anchors and all input callbacks. The voice box
+        -- becomes the third row of the same column; the description below
+        -- borrows viewport anchors only. Release font/art/geometry on hide.
         Input(p, s, p.VoiceBox, voice, false, 24)
-        Place(p.PrivateGroup, voice, 8, 80, 22, 22)
-        Place(p.CrossFactionGroup, voice, 108, 80, 22, 22)
+        Voice(p, s, p.VoiceBox, voice)
+        Place(p.PrivateGroup, voice, 8, 84, 22, 20)
+        Place(p.CrossFactionGroup, voice, 108, 84, 22, 20)
         if p.PrivateGroup then ns.SkinSwitch(p.PrivateGroup) end
         if p.CrossFactionGroup then ns.SkinSwitch(p.CrossFactionGroup) end
         if s.summary then

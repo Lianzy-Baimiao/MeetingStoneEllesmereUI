@@ -65,6 +65,10 @@ local DEFAULTS = {
     -- scaling it up can overflow into the neighbouring column. Opt in and look.
     memberIconScale = false,
 
+    -- Hide browse results whose 说明 column shows the voice-chat icon (mostly
+    -- studio groups). OFF by default; own listing and live applications stay.
+    hideVoiceGroups = false,
+
     -- List rows
     skinRows     = true,          -- turning OFF is reload-bound: the stock row art
                                   -- is already alpha'd out and we keep no original to restore
@@ -159,6 +163,7 @@ local REFRESH = {
     headerShade     = "ApplyHeaders",
     memberIconScale = "ApplyMemberIcons",
     roleFilterBar   = "ApplyRoleBar",
+    hideVoiceGroups = "ApplyVoiceFilter",
     -- Hooking is one-shot; turning it off again is reload-bound.
     noAutoFilterPopup = "RefreshAll",
 
@@ -206,6 +211,8 @@ function ns.ResetAll()
     local db = ns.DB()
     for key in pairs(DEFAULTS) do db[key] = nil end
     ns.RefreshAll()
+    -- Not part of RefreshAll: re-filtering the list on every look change is waste.
+    ns.Safe(ns.ApplyVoiceFilter)
     if ns.OnSettingChanged then ns.Safe(ns.OnSettingChanged) end
 end
 

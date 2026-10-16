@@ -1,5 +1,47 @@
 # 更新记录
 
+## 1.4.21 — 2026-10-16
+
+### English
+- Skin the auto-apply note popup (MeetingStoneEX) like the filter windows: window shell, title in the title band, flat buttons, close button and wait-time input. The borrowed Blizzard note input gets a reversible layer only while it is inside the popup.
+- Create tab: the voice-chat box is now the third row of the item level / score column (same width, height, label spacing and font), and the two checkboxes no longer overlap it. Its native width and anchors are restored when released.
+- New option 活动列表 → 屏蔽语音队伍 (off by default): hide browse results whose comment column shows the voice-chat icon. Your own listing and groups with a live application stay visible; counts, filters and auto-apply use the same list.
+- No callbacks, inputs or SavedVariables of MeetingStone / MeetingStoneEX are replaced. 205 offline regression tests and 14 runtime Lua 5.1 syntax checks passed. Verify in the live client after a full restart.
+
+### 中文
+- 美化 MeetingStoneEX 自动申请的备注弹窗：与过滤窗口一致的窗口底板，标题放进标题条，按钮、关闭按钮和等待时间输入框改为扁平样式。借用的暴雪申请备注输入框只在弹窗内套用可还原的样式。
+- 创建活动页：“语音聊天”输入框成为最低装等、最低分数下的第三行，宽度、高度、标签间距和字体一致；下方两个勾选项不再压住它。释放时还原其原始宽度和锚点。
+- 新增设置「活动列表 → 屏蔽语音队伍」，默认关闭：隐藏说明栏带小喇叭（语音）图标的队伍。自己的队伍和正在申请的队伍照常显示；活动总数、各项过滤和自动申请使用同一份列表。
+- 不替换集合石 / MeetingStoneEX 的回调、输入框或存档。205 项离线回归测试及 14 个运行文件的 Lua 5.1 语法检查通过；实机效果需完全重启游戏后确认。
+
+## 1.4.20 — 2026-10-16
+
+### English
+- Style the Browse page auto-apply (自动申请) button, when present, with the same flat skin as the refresh button.
+- A button created after the skin's first pass is styled the next time the Browse page opens; each button is styled once.
+- No other skin behavior or settings changes from 1.4.19.
+- 191 offline regression tests and 12 runtime Lua 5.1 syntax checks passed. Verify in the live client after a full restart.
+
+### 中文
+- 查找页的“自动申请”按钮（存在时）使用与刷新按钮一致的扁平样式。
+- 按钮晚于皮肤首次处理创建时，下次打开查找页补上样式；每个按钮只处理一次。
+- 相比 1.4.19 不修改其他皮肤逻辑或已有配置。
+- 191 项离线回归测试及 12 个运行文件的 Lua 5.1 语法检查通过；实机效果需完全重启游戏后确认。
+
+## 1.4.19 — 2026-10-15
+
+### English
+- Added Retail 12.1.5 Interface tag `120105` while retaining existing tags.
+- No skin behavior or settings changes from 1.4.18.
+- Include the existing MIT LICENSE in the release archive, alongside runtime files and the changelog.
+- 188 offline regression tests and 12 runtime Lua 5.1 syntax checks passed. Fully exit and restart after installation, retain SavedVariables, and verify behavior in the live 12.1.5 client.
+
+### 中文
+- 新增正式服 12.1.5 的 Interface 标记 `120105`，保留已有版本标记。
+- 相比 1.4.18 不修改皮肤逻辑或已有配置。
+- 发布包补充附带现有 MIT LICENSE；ZIP 包含本插件运行文件、更新记录和许可证。
+- 188 项离线回归测试及 12 个运行文件的 Lua 5.1 语法检查通过。安装后完全退出并重启，保留 SavedVariables；12.1.5 实机行为仍需游戏内验证。
+
 ## 1.4.18 — 2026-10-04
 
 - 正式支持 EllesmereUI 环境下的 MeetingStone_Happy 集合石开心快乐新 UI 版、经典 UI 版；用户已确认两版可用，其他集合石版本不在支持范围内。

@@ -1,0 +1,13 @@
+## 1.4.19 — 2026-10-15
+
+### English
+- Added Retail 12.1.5 Interface tag `120105` while retaining existing tags.
+- No skin behavior or settings changes from 1.4.18.
+- Include the existing MIT LICENSE in the release archive, alongside runtime files and the changelog.
+- 188 offline regression tests and 12 runtime Lua 5.1 syntax checks passed. Fully exit and restart after installation, retain SavedVariables, and verify behavior in the live 12.1.5 client.
+
+### 中文
+- 新增正式服 12.1.5 的 Interface 标记 `120105`，保留已有版本标记。
+- 相比 1.4.18 不修改皮肤逻辑或已有配置。
+- 发布包补充附带现有 MIT LICENSE；ZIP 包含本插件运行文件、更新记录和许可证。
+- 188 项离线回归测试及 12 个运行文件的 Lua 5.1 语法检查通过。安装后完全退出并重启，保留 SavedVariables；12.1.5 实机行为仍需游戏内验证。
