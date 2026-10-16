@@ -1,5 +1,15 @@
 # 更新记录
 
+## Unreleased
+
+### English
+- Browse page, top-right button row: the auto-apply (自动申请) button now has the same 8px gap to 刷新 as the other buttons in the row (it was 2px).
+- The floating panel (悬浮窗) now uses the skin's 窗口背景颜色 and 背景不透明度, live, like the main window and the filter popups (it had EllesmereUI's fixed panel fill). It has no title band.
+
+### 中文
+- 查找活动页右上角按钮行：自动申请按钮与「刷新」的间距改为与该行其他按钮一致（8，原为 2）。
+- 悬浮窗跟随皮肤的「窗口背景颜色」和「背景不透明度」，即时生效，与主窗口、过滤弹窗一致（原为 EllesmereUI 的固定底色）；悬浮窗不显示标题深色条。
+
 ## 1.4.22 — 2026-10-17
 
 ### English

@@ -98,6 +98,9 @@ function ns.Shell(frame, opts)
     ns.S.Panel(frame, { noBg = true, noBorder = opts.noBorder })
 
     local d = ns.D(frame)
+    -- opts.noTopBar: a frame shorter than the title band (the 26px 悬浮窗) takes
+    -- the body colour and opacity only, whatever the 标题栏深色条 setting.
+    d.noTopBar = opts.noTopBar and true or nil
     if not d.bgHost then
         local host = CreateFrame("Frame", nil, frame)
         host:SetAllPoints(frame)
@@ -131,7 +134,7 @@ function ns.PaintSurface(frame)
 
     local r, g, b = ns.GetColor("bgColor")
     local a = G("bgAlpha")
-    local on = G("topBar") and true or false
+    local on = G("topBar") and not d.noTopBar and true or false
 
     d.bg:SetColorTexture(r, g, b, a)
     -- Re-seat the body's top edge so the two bands stay flush and never overlap.

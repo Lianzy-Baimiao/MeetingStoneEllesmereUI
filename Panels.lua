@@ -795,13 +795,15 @@ end
 
 -------------------------------------------------------------------------------
 --  悬浮小窗 / DataBroker. A LibWindow-embedded Button with its own backdrop.
+--  Drawn by our shell rather than S.Panel's fill, so 窗口颜色 / 背景不透明度
+--  repaint it live with the main window. 26px tall: no title band.
 -------------------------------------------------------------------------------
 local function Skin_DataBroker(mod)
     if not mod then return end
     local panel = mod.BrokerPanel
     if not panel then return end
     if panel.SetBackdrop then panel:SetBackdrop(nil) end
-    ns.Panel(panel)
+    ns.Shell(panel, { noTopBar = true })
     ns.Font(mod.BrokerText)
 end
 

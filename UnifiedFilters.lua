@@ -353,6 +353,14 @@ function ns.SetupUnifiedFilters(p)
         -- anchors AdvButton back to RefreshButton before our post-hook runs.
         p.RefreshButton:SetPoint("TOPRIGHT", ns.MainPanel, "TOPRIGHT",
             -(10 + p.AdvButton:GetWidth() + GAP + extraWidth), -38)
+        -- EX's auto-apply button sits flush against RefreshButton natively; give
+        -- it the same GAP as the rest of the row. Both points keep Refresh's height.
+        local auto = p.AutoApplyButton
+        if auto then
+            auto:ClearAllPoints()
+            auto:SetPoint("TOPRIGHT", p.RefreshButton, "TOPLEFT", -GAP, 0)
+            auto:SetPoint("BOTTOMRIGHT", p.RefreshButton, "BOTTOMLEFT", -GAP, 0)
+        end
     end
     Layout(u)
     ns.QueueWalk(u.host)

@@ -9,7 +9,7 @@ local Panel, UI
 
 local HINTS = {
     useClassColor = "默认关闭，选中使用 EUI 图标绿；开启使用角色职业色。边框始终深色",
-    bgColor = "主窗口与过滤弹窗共用，不修改 EUI 的全局配色",
+    bgColor = "主窗口、过滤弹窗与悬浮窗共用，不修改 EUI 的全局配色",
     bgAlpha = "0% 完全透明，100% 完全不透明",
     topBar = "在标题区域显示深色底条",
     topBarShade = "调整标题条与窗口背景的明暗差异",
