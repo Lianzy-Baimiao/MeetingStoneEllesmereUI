@@ -3,14 +3,16 @@
 ### English
 - Browse page, top-right button row: the auto-apply (自动申请) button now has the same 8px gap to 刷新 as the other buttons in the row (it was 2px).
 - The floating panel (悬浮窗) now uses the skin's 窗口背景颜色 and 背景不透明度, live, like the main window and the filter popups (it had EllesmereUI's fixed panel fill). It has no title band.
+- The floating panel shows MeetingStone's logo again. EllesmereUI's panel skin faded every texture of the panel, the logo included, and faded it again whenever certain Blizzard windows opened.
 - Lighter window opening: the skin pass that runs each time the main window, the browse page or a tab is shown read each frame's full child and region list again for every entry. It now reads each list once and visits the same frames in the same order (a 12-row test tree: 496 → 218 calls).
-- No new options, settings or SavedVariables since 1.4.22. 212 offline regression tests and 14 runtime Lua 5.1 syntax checks passed. Verify in the live client after a full restart.
+- No new options, settings or SavedVariables since 1.4.22. 213 offline regression tests and 14 runtime Lua 5.1 syntax checks passed. Verify in the live client after a full restart.
 
 ### 中文
 - 查找活动页右上角按钮行：自动申请按钮与「刷新」的间距改为与该行其他按钮一致（8，原为 2）。
 - 悬浮窗跟随皮肤的「窗口背景颜色」和「背景不透明度」，即时生效，与主窗口、过滤弹窗一致（原为 EllesmereUI 的固定底色）；悬浮窗不显示标题深色条。
+- 悬浮窗重新显示集合石图标。EllesmereUI 的面板美化会把面板上的所有贴图（包括图标）设为透明，打开部分暴雪窗口时还会再执行一次。
 - 打开窗口更轻：每次显示主窗口、查找页或切换标签时，皮肤会遍历框体；原来对每个子控件、每个区域都重新读取一遍整份列表，现在每个框体只读一次，处理的框体和顺序不变（12 行测试树：496 → 218 次调用）。
-- 相比 1.4.22 不新增设置、不改存档。212 项离线回归测试及 14 个运行文件的 Lua 5.1 语法检查通过；实机效果需完全重启游戏后确认。
+- 相比 1.4.22 不新增设置、不改存档。213 项离线回归测试及 14 个运行文件的 Lua 5.1 语法检查通过；实机效果需完全重启游戏后确认。
 
 ## 1.4.22 — 2026-10-17
 

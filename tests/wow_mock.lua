@@ -14,10 +14,12 @@ end
 function Frame:GetObjectType() return self.kind end
 function Frame:GetParent() return self.parent end
 function Frame:SetParent(parent)
+    -- Regions (FontString/Texture) live in their parent's region list, frames in its child list.
+    local list = (self.kind=='FontString' or self.kind=='Texture') and 'regions' or 'children'
     if self.parent then
-        for i,c in ipairs(self.parent.children) do if c==self then table.remove(self.parent.children,i); break end end
+        for i,c in ipairs(self.parent[list]) do if c==self then table.remove(self.parent[list],i); break end end
     end
-    self.parent=parent; if parent then table.insert(parent.children,self) end
+    self.parent=parent; if parent then table.insert(parent[list],self) end
 end
 function Frame:SetScrollChild(child) self.scrollChild=child end
 function Frame:SetVerticalScroll(v) self.scroll=v end

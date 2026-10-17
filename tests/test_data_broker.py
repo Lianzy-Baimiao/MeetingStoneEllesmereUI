@@ -30,8 +30,23 @@ class DataBrokerTests(unittest.TestCase):
             panel=CreateFrame('Button',nil,main); panel:SetSize(160,26)
             panel.backdrop={}
             function panel:SetBackdrop(b) self.backdrop=b end
-            broker={BrokerPanel=panel,BrokerText=panel:CreateFontString()}
+            broker={BrokerPanel=panel,BrokerText=panel:CreateFontString(),BrokerIcon=panel:CreateTexture()}
             runPass('DataBroker',broker)
+        ''')
+
+    def test_logo_stays_visible_through_restrip(self):
+        self.boot()
+        self.run_lua('''
+            local icon, host = broker.BrokerIcon, ns.D(panel).iconHost
+            assert(host and host:GetParent()==panel and host.allPoints==panel, 'logo host is not over the panel')
+            assert(icon:GetParent()==host, 'logo still sits on the panel the skin fades')
+            assert(icon:GetAlpha()==1, 'logo was left faded')
+            for _,r in ipairs(panel.regions) do assert(r~=icon, 'logo still in the panel region list') end
+            -- EllesmereUI's restrip fades every texture of a registered frame again.
+            ns.S.FadeRegions(panel)
+            assert(icon:GetAlpha()==1, 'restrip faded the logo')
+            runPass('DataBroker',broker)
+            assert(ns.D(panel).iconHost==host and icon:GetParent()==host and icon:GetAlpha()==1)
         ''')
 
     def test_floating_panel_follows_window_opacity_without_title_band(self):

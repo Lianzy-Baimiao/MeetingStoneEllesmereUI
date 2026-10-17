@@ -797,6 +797,9 @@ end
 --  悬浮小窗 / DataBroker. A LibWindow-embedded Button with its own backdrop.
 --  Drawn by our shell rather than S.Panel's fill, so 窗口颜色 / 背景不透明度
 --  repaint it live with the main window. 26px tall: no title band.
+--  S.Panel fades every texture the panel owns, and EllesmereUI's restrip fades
+--  them again whenever certain Blizzard windows open. The logo moves to a child
+--  frame that neither touches, at the same place.
 -------------------------------------------------------------------------------
 local function Skin_DataBroker(mod)
     if not mod then return end
@@ -804,6 +807,15 @@ local function Skin_DataBroker(mod)
     if not panel then return end
     if panel.SetBackdrop then panel:SetBackdrop(nil) end
     ns.Shell(panel, { noTopBar = true })
+    local icon, d = mod.BrokerIcon, ns.D(panel)
+    if icon and icon.SetParent then
+        if not d.iconHost then
+            d.iconHost = CreateFrame("Frame", nil, panel)
+            d.iconHost:SetAllPoints(panel)
+        end
+        icon:SetParent(d.iconHost)
+        icon:SetAlpha(1)
+    end
     ns.Font(mod.BrokerText)
 end
 
