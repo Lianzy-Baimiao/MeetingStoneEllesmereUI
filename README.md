@@ -2,7 +2,7 @@
 
 让 **MeetingStone_Happy 集合石开心快乐版**使用 [EllesmereUI](https://www.curseforge.com/wow/addons/ellesmereui) 风格的美化插件，统一界面外观，并优化设置、筛选和列表操作体验。
 
-**当前版本：1.4.22** · **作者：白描** · **正式服**
+**当前版本：1.4.23** · **作者：白描** · **正式服**
 
 [CurseForge 下载](https://www.curseforge.com/wow/addons/meetingstoneellesmereui) · [更新日志](CHANGELOG.md) · [问题反馈](https://github.com/Lianzy-Baimiao/MeetingStoneEllesmereUI/issues)
 
@@ -87,6 +87,8 @@
 1.4.21 美化自动申请的备注弹窗；创建活动页的“语音聊天”输入框与最低装等、最低分数排成同一列；“界面美化 → 活动列表”新增「屏蔽语音队伍」，默认关闭，开启后隐藏说明栏带小喇叭图标的队伍（多为工作室），自己的队伍和已申请的队伍照常显示。
 
 1.4.22 减少活动列表每次刷新时的额外开销（查找行内小勾选框时每个框体只读取一次子控件）；不改动外观或已有配置。
+
+1.4.23 悬浮窗跟随「窗口背景颜色」「背景不透明度」；查找页右上角自动申请按钮与其他按钮间距一致；打开窗口时的遍历更轻；不新增设置。
 
 ## 安装与更新
 
