@@ -216,8 +216,9 @@ end
 -- so the whole window ends up on one face instead of a mix.
 function ns.FontAll(frame)
     if not frame.GetRegions then return end
-    for i = 1, select("#", frame:GetRegions()) do
-        local r = select(i, frame:GetRegions())
+    -- Read the regions once: select(i, frame:GetRegions()) asked the client for
+    -- the whole list again for every entry, on every frame of every walk.
+    for _, r in ipairs({ frame:GetRegions() }) do
         if r and r.IsObjectType and r:IsObjectType("FontString") then
             ns.Safe(ns.Font, r)
         end
@@ -352,8 +353,10 @@ function ns.Walk(frame, depth)
     ns.Safe(ns.FontAll, frame)
 
     if not frame.GetChildren then return end
-    for i = 1, select("#", frame:GetChildren()) do
-        ns.Walk(select(i, frame:GetChildren()), depth + 1)
+    -- Runs on every MainPanel / BrowsePanel / tab show: ask for the children once
+    -- per frame, not once per child (select(i, frame:GetChildren()) is quadratic).
+    for _, child in ipairs({ frame:GetChildren() }) do
+        ns.Walk(child, depth + 1)
     end
 end
 

@@ -5,10 +5,12 @@
 ### English
 - Browse page, top-right button row: the auto-apply (自动申请) button now has the same 8px gap to 刷新 as the other buttons in the row (it was 2px).
 - The floating panel (悬浮窗) now uses the skin's 窗口背景颜色 and 背景不透明度, live, like the main window and the filter popups (it had EllesmereUI's fixed panel fill). It has no title band.
+- Lighter window opening: the skin pass that runs each time the main window, the browse page or a tab is shown read each frame's full child and region list again for every entry. It now reads each list once and visits the same frames in the same order (a 12-row test tree: 496 → 218 calls).
 
 ### 中文
 - 查找活动页右上角按钮行：自动申请按钮与「刷新」的间距改为与该行其他按钮一致（8，原为 2）。
 - 悬浮窗跟随皮肤的「窗口背景颜色」和「背景不透明度」，即时生效，与主窗口、过滤弹窗一致（原为 EllesmereUI 的固定底色）；悬浮窗不显示标题深色条。
+- 打开窗口更轻：每次显示主窗口、查找页或切换标签时，皮肤会遍历框体；原来对每个子控件、每个区域都重新读取一遍整份列表，现在每个框体只读一次，处理的框体和顺序不变（12 行测试树：496 → 218 次调用）。
 
 ## 1.4.22 — 2026-10-17
 
